@@ -10,3 +10,9 @@ Cambios principales:
 - Los roles se controlan por Firestore: OPERARIO, LIDER_LOGISTICO, GERENCIA.
 
 Después de subir el ZIP descomprimido, copie el contenido de firestore.rules en Firebase > Firestore Database > Reglas y publique.
+
+
+VERSIÓN 3.3:
+- Solo OPERARIO registra cortes.
+- LÍDER LOGÍSTICO y GERENCIA ven tablero, aprobaciones y usuarios según rol.
+- Firestore bloquea creación de cortes para roles administrativos.
