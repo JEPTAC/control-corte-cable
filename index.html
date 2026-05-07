@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Control de Corte de Cable | Formato operativo</title>
+  <style>
+    :root{
+      --navy:#0b2a5b;
+      --navy-2:#071d3f;
+      --teal:#008a8a;
+      --teal-2:#00a3a3;
+      --green:#0f8f46;
+      --amber:#f3a400;
+      --orange:#f36b13;
+      --red:#c91523;
+      --blue:#2563eb;
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --line:#d7e0ec;
+      --line-2:#edf2f7;
+      --text:#18243a;
+      --muted:#667085;
+      --shadow:0 16px 42px rgba(11,42,91,.12);
+      --shadow-soft:0 10px 28px rgba(11,42,91,.08);
+      --radius:20px;
+      --font: Arial, Helvetica, sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(0,138,138,.10), transparent 28rem),
+        radial-gradient(circle at bottom right, rgba(243,107,19,.12), transparent 30rem),
+        var(--bg);
+      min-height:100vh;
+    }
+
+    .app{
+      width:min(1420px, 96vw);
+      margin:18px auto 40px;
+    }
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+      background:
+        linear-gradient(135deg, rgba(7,29,63,.96), rgba(11,42,91,.96) 48%, rgba(0,138,138,.96)),
+        radial-gradient(circle at 85% 20%, rgba(255,255,255,.22), transparent 18rem);
+      color:white;
+      border-radius:30px;
+      box-shadow:var(--shadow);
+      padding:24px;
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      align-items:flex-start;
+      min-height:168px;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:auto -90px -160px auto;
+      width:360px;
+      height:360px;
+      background:radial-gradient(circle, rgba(255,255,255,.15), transparent 68%);
+      pointer-events:none;
+    }
+    .hero:after{
+      content:"";
+      position:absolute;
+      inset:14px 14px auto auto;
+      width:96px;
+      height:5px;
+      border-radius:99px;
+      background:linear-gradient(90deg, rgba(255,255,255,.7), rgba(255,255,255,.18));
+      opacity:.45;
+    }
+    .hero-main{position:relative; z-index:2; min-width:0; max-width:760px}
+    .hero-eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:10px;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.13);
+      border:1px solid rgba(255,255,255,.24);
+      color:rgba(255,255,255,.92);
+      font-weight:900;
+      font-size:.78rem;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      backdrop-filter:blur(10px);
+    }
+    .hero h1{
+      margin:0 0 10px;
+      font-size:clamp(2rem, 4.6vw, 3.45rem);
+      line-height:1.03;
+      letter-spacing:-.03em;
+      text-transform:none;
+      text-wrap:balance;
+    }
+    .hero p{margin:0; color:rgba(255,255,255,.90); font-size:clamp(.96rem, 1.35vw, 1.08rem); max-width:620px}
+    .hero-chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+    .hero-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.2);
+      color:rgba(255,255,255,.92);
+      font-weight:800;
+      font-size:.78rem;
+    }
+    .hero-actions{display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; align-items:center; z-index:2; flex:0 0 auto}
+    .version-pill{
+      border:1px solid rgba(255,255,255,.35);
+      background:rgba(255,255,255,.12);
+      color:white;
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:.82rem;
+      white-space:nowrap;
+      backdrop-filter:blur(10px);
+    }
+
+    .toolbar{
+      margin:16px 0;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .toolbar-group{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .view-label{font-size:.85rem; color:var(--muted); font-weight:700}
+
+    button, .btn{
+      border:0;
+      border-radius:14px;
+      padding:12px 15px;
+      font-weight:800;
+      font-size:.92rem;
+      cursor:pointer;
+      color:var(--navy);
+      background:white;
+      box-shadow:var(--shadow-soft);
+      border:1px solid var(--line);
+      transition:transform .16s ease, box-shadow .16s ease, filter .16s ease;
+      user-select:none;
+    }
+    button:hover{transform:translateY(-1px); box-shadow:0 16px 34px rgba(11,42,91,.12)}
+    button:active{transform:scale(.98)}
+    .btn-primary{background:linear-gradient(135deg, var(--teal), var(--navy)); color:white; border-color:transparent}
+    .btn-green{background:linear-gradient(135deg, var(--green), #0c6d38); color:white; border-color:transparent}
+    .btn-orange{background:linear-gradient(135deg, var(--orange), #c94d05); color:white; border-color:transparent}
+    .btn-red{background:linear-gradient(135deg, var(--red), #99111d); color:white; border-color:transparent}
+    .btn-ghost{background:rgba(255,255,255,.7)}
+    .btn-small{padding:9px 11px; font-size:.8rem; border-radius:12px}
+    .active-view{outline:3px solid rgba(0,138,138,.22); color:white; background:var(--navy)}
+
+    .main-grid{
+      display:grid;
+      grid-template-columns:minmax(0, 1.05fr) minmax(360px, .95fr);
+      gap:18px;
+      align-items:start;
+    }
+
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(215,224,236,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-soft);
+      overflow:hidden;
+    }
+    .card-header{
+      padding:18px 20px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,251,255,.96));
+    }
+    .card-header h2, .card-header h3{margin:0; color:var(--navy); line-height:1.08}
+    .card-header h2{font-size:1.15rem; text-transform:uppercase; letter-spacing:.02em}
+    .card-header h3{font-size:1rem}
+    .card-body{padding:18px 20px}
+
+    form{display:grid; gap:14px}
+    fieldset{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      margin:0;
+      background:linear-gradient(180deg, #fff, #fbfdff);
+    }
+    legend{
+      padding:0 10px;
+      font-weight:900;
+      color:var(--navy);
+      font-size:.94rem;
+      letter-spacing:.02em;
+    }
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(12, 1fr);
+      gap:12px;
+    }
+    .field{display:flex; flex-direction:column; gap:6px; min-width:0}
+    .col-2{grid-column:span 2}.col-3{grid-column:span 3}.col-4{grid-column:span 4}.col-5{grid-column:span 5}.col-6{grid-column:span 6}.col-7{grid-column:span 7}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+    label{font-size:.78rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.04em}
+    input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:13px;
+      padding:12px 12px;
+      background:#fff;
+      color:var(--text);
+      font-size:16px;
+      outline:none;
+      transition:border-color .16s ease, box-shadow .16s ease;
+      min-height:44px;
+    }
+    input:focus, select:focus, textarea:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(0,138,138,.12)}
+    textarea{min-height:82px; resize:vertical}
+    .readonly{background:#f8fafc; color:#344054; font-weight:800}
+
+    .checks{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:10px;
+    }
+    .check-card{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:white;
+      font-weight:800;
+      color:var(--navy);
+    }
+    .check-card input{width:20px; height:20px; min-height:20px; accent-color:var(--teal)}
+
+
+    .segmented-control{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:10px;
+      width:100%;
+    }
+    .seg-option{
+      width:100%;
+      min-height:58px;
+      padding:12px;
+      border-radius:15px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--navy);
+      box-shadow:none;
+      text-align:left;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:3px;
+      line-height:1.1;
+    }
+    .seg-option:hover{box-shadow:var(--shadow-soft)}
+    .seg-option .seg-title{font-size:.92rem; font-weight:1000}
+    .seg-option .seg-sub{font-size:.72rem; color:var(--muted); font-weight:800}
+    .seg-option.active{
+      color:white;
+      border-color:transparent;
+      background:linear-gradient(135deg, var(--teal), var(--navy));
+      box-shadow:0 12px 28px rgba(0,138,138,.22);
+    }
+    .seg-option.active .seg-sub{color:rgba(255,255,255,.86)}
+    .seg-option.warn.active{background:linear-gradient(135deg, var(--orange), #c94d05)}
+    .seg-option.stop.active{background:linear-gradient(135deg, var(--red), #99111d)}
+    .inline-tools{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px}
+    .share-panel{
+      margin-top:12px;
+      display:none;
+      gap:8px;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      color:#14532d;
+      font-size:.88rem;
+      line-height:1.35;
+      font-weight:700;
+    }
+    .share-panel.show{display:grid}
+    .share-panel strong{color:#064e3b}
+
+    .rule-box{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:13px;
+      background:#f8fafc;
+      border:1px dashed #b8c7da;
+      border-radius:16px;
+      color:#344054;
+      font-size:.92rem;
+      line-height:1.35;
+    }
+    .rule-box strong{color:var(--navy)}
+    .status-panel{
+      display:grid;
+      gap:10px;
+      padding:14px;
+      border-radius:18px;
+      background:linear-gradient(135deg, #f8fafc, #fff);
+      border:1px solid var(--line);
+      min-height:110px;
+    }
+    .status-label{font-size:.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:900}
+    .status-value{font-size:1.25rem; font-weight:1000; color:var(--navy)}
+    .status-detail{font-size:.9rem; color:#475467; line-height:1.35}
+    .status-ok{border-left:6px solid var(--green)}
+    .status-warn{border-left:6px solid var(--amber)}
+    .status-stop{border-left:6px solid var(--red)}
+    .status-auth{border-left:6px solid var(--orange)}
+
+    .form-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      position:sticky;
+      bottom:10px;
+      padding:12px;
+      background:rgba(244,247,251,.76);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(215,224,236,.85);
+      border-radius:18px;
+      z-index:10;
+    }
+
+    .dashboard-grid{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:12px;
+    }
+    .kpi{
+      padding:14px;
+      border-radius:18px;
+      background:linear-gradient(180deg, #fff, #f9fbff);
+      border:1px solid var(--line);
+      min-height:105px;
+      position:relative;
+      overflow:hidden;
+    }
+    .kpi:after{
+      content:"";
+      position:absolute;
+      right:-26px;
+      top:-28px;
+      width:86px;
+      height:86px;
+      border-radius:50%;
+      background:rgba(0,138,138,.08);
+    }
+    .kpi .value{font-size:2rem; font-weight:1000; color:var(--navy); line-height:1}
+    .kpi .label{font-size:.78rem; color:var(--muted); font-weight:900; text-transform:uppercase; margin-top:8px; letter-spacing:.04em}
+    .kpi.good{border-left:5px solid var(--green)}
+    .kpi.warn{border-left:5px solid var(--amber)}
+    .kpi.bad{border-left:5px solid var(--red)}
+    .kpi.blue{border-left:5px solid var(--blue)}
+
+    .chart-card{margin-top:14px; padding:16px; border:1px solid var(--line); border-radius:18px; background:white}
+    .chart-title{margin:0 0 12px; font-weight:1000; color:var(--navy); text-transform:uppercase; letter-spacing:.03em; font-size:.88rem}
+    .bars{display:grid; gap:10px}
+    .bar-row{display:grid; grid-template-columns:130px 1fr 42px; gap:10px; align-items:center; font-size:.86rem; font-weight:800; color:#344054}
+    .bar-track{height:12px; background:#edf2f7; border-radius:999px; overflow:hidden; border:1px solid #e5eaf1}
+    .bar-fill{height:100%; width:0%; border-radius:999px; transition:width .5s ease}
+    .fill-green{background:linear-gradient(90deg,var(--green),#2db56b)}
+    .fill-orange{background:linear-gradient(90deg,var(--orange),#f6a05b)}
+    .fill-amber{background:linear-gradient(90deg,var(--amber),#ffcb4d)}
+    .fill-red{background:linear-gradient(90deg,var(--red),#e94b5a)}
+    .fill-blue{background:linear-gradient(90deg,var(--blue),#60a5fa)}
+
+    .donut-wrap{display:grid; grid-template-columns:150px 1fr; gap:16px; align-items:center}
+    .donut{width:150px; height:150px}
+    .donut text{font-family:var(--font); fill:var(--navy); font-weight:1000}
+    .legend{display:grid; gap:8px}
+    .legend-item{display:flex; align-items:center; gap:8px; font-size:.88rem; font-weight:800; color:#344054}
+    .dot{width:11px; height:11px; border-radius:50%; display:inline-block}
+
+    .exports{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    .note{
+      margin-top:12px;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#7c2d12;
+      border-radius:16px;
+      padding:12px 14px;
+      font-size:.9rem;
+      line-height:1.35;
+    }
+    .email-config{
+      margin-top:12px;
+      display:grid;
+      gap:10px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#f8fafc;
+    }
+    .email-config .two{display:grid; grid-template-columns:1fr; gap:10px}
+    .email-config label{font-size:.72rem}
+    .email-config input{min-height:42px; padding:10px 12px; font-size:15px}
+    @media(min-width:980px){.email-config .two{grid-template-columns:1fr 1.35fr}}
+
+    .table-card{margin-top:18px}
+    .table-tools{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:12px;
+    }
+    .search{max-width:420px}
+    .table-scroll{overflow:auto; border:1px solid var(--line); border-radius:18px; background:white; max-height:520px}
+    table{width:100%; border-collapse:separate; border-spacing:0; min-width:1200px}
+    th, td{padding:11px 12px; border-bottom:1px solid var(--line-2); text-align:left; font-size:.84rem; vertical-align:top}
+    th{position:sticky; top:0; z-index:1; background:#f8fafc; color:var(--navy); font-weight:1000; text-transform:uppercase; letter-spacing:.04em; font-size:.74rem; border-bottom:1px solid var(--line)}
+    tr:hover td{background:#fcfdff}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border-radius:999px; font-size:.72rem; font-weight:1000; white-space:nowrap}
+    .pill-ok{background:#dcfce7; color:#166534}.pill-warn{background:#fef3c7; color:#92400e}.pill-stop{background:#fee2e2; color:#991b1b}.pill-auth{background:#ffedd5; color:#9a3412}.pill-blue{background:#dbeafe; color:#1e40af}
+    .row-actions{display:flex; gap:6px; flex-wrap:wrap}
+    .empty{
+      padding:26px;
+      text-align:center;
+      color:var(--muted);
+      font-weight:800;
+      background:#fff;
+      border-radius:18px;
+      border:1px dashed #b8c7da;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%) translateY(120%);
+      background:var(--navy-2);
+      color:white;
+      padding:13px 16px;
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      z-index:999;
+      font-weight:800;
+      min-width:min(420px, 92vw);
+      text-align:center;
+      opacity:0;
+      transition:transform .25s ease, opacity .25s ease;
+    }
+    .toast.show{transform:translateX(-50%) translateY(0); opacity:1}
+
+
+
+    .field.expanded{
+      grid-column:span 12 !important;
+      transition:grid-column .18s ease;
+    }
+    .field.expanded input,
+    .field.expanded textarea{
+      min-height:54px;
+      font-size:16px;
+      box-shadow:0 0 0 4px rgba(0,138,138,.10);
+    }
+    textarea.auto-grow{
+      overflow:hidden;
+      resize:none;
+      line-height:1.35;
+      min-height:54px;
+      max-height:240px;
+    }
+    .field:focus-within label{color:var(--teal)}
+    .adaptive-hint{
+      font-size:.74rem;
+      color:var(--muted);
+      font-weight:700;
+      margin-top:2px;
+    }
+
+    @media (max-width:1050px){
+      .main-grid{grid-template-columns:1fr}
+      .dashboard-grid{grid-template-columns:repeat(3, 1fr)}
+      .exports{grid-template-columns:repeat(3, 1fr)}
+    }
+    @media (max-width:760px){
+      .app{width:100%; margin:0; padding:10px 10px 28px}
+      .hero{border-radius:24px; padding:18px; min-height:auto; flex-direction:column}
+      .hero h1{font-size:clamp(2rem, 9.2vw, 2.85rem); line-height:1.02}
+      .hero-actions{justify-content:flex-start; width:100%}
+      .hero-actions button{width:auto}
+      .hero-chips{gap:6px}
+      .hero-chip{font-size:.72rem; padding:7px 9px}
+      .toolbar{position:sticky; top:0; z-index:30; background:rgba(244,247,251,.88); padding:8px 0; backdrop-filter:blur(12px)}
+      .card-header{align-items:flex-start; flex-direction:column}
+      .card-body{padding:14px}
+      fieldset{padding:13px}
+      .form-grid{grid-template-columns:repeat(6, 1fr); gap:10px}
+      .col-2,.col-3{grid-column:span 3}.col-4,.col-5,.col-6,.col-7,.col-8,.col-12{grid-column:span 6}
+      .checks{grid-template-columns:1fr}
+      .segmented-control{grid-template-columns:1fr}
+      .dashboard-grid{grid-template-columns:repeat(2, 1fr)}
+      .donut-wrap{grid-template-columns:1fr; justify-items:center}
+      .exports{grid-template-columns:1fr}
+      .form-actions{justify-content:stretch}.form-actions button{flex:1 1 auto}
+      .bar-row{grid-template-columns:100px 1fr 34px}
+    }
+    @media (max-width:420px){
+      .dashboard-grid{grid-template-columns:1fr}
+      button{width:100%}
+      .toolbar-group{width:100%}
+      .toolbar-group button{flex:1 1 45%}
+      .hero h1{font-size:2rem}
+      .hero p{font-size:.95rem}
+      .hero-chip{flex:1 1 100%; justify-content:center}
+    }
+
+    /* Manual preview modes */
+    body[data-view="mobile"] .app{width:min(430px, 100vw); padding:10px; margin:0 auto 28px}
+    body[data-view="mobile"] .main-grid{grid-template-columns:1fr}
+    body[data-view="mobile"] .form-grid{grid-template-columns:repeat(6, 1fr)}
+    body[data-view="mobile"] .col-2, body[data-view="mobile"] .col-3{grid-column:span 3}
+    body[data-view="mobile"] .col-4, body[data-view="mobile"] .col-5, body[data-view="mobile"] .col-6, body[data-view="mobile"] .col-7, body[data-view="mobile"] .col-8, body[data-view="mobile"] .col-12{grid-column:span 6}
+    body[data-view="mobile"] .checks, body[data-view="mobile"] .exports, body[data-view="mobile"] .segmented-control{grid-template-columns:1fr}
+    body[data-view="mobile"] .dashboard-grid{grid-template-columns:1fr}
+    body[data-view="mobile"] .hero{flex-direction:column; min-height:auto; padding:18px; border-radius:24px}
+    body[data-view="mobile"] .hero h1{font-size:2.05rem}
+    body[data-view="mobile"] .hero-actions{justify-content:flex-start; width:100%}
+    body[data-view="mobile"] .hero-actions button{width:auto}
+    body[data-view="tablet"] .app{width:min(820px, 96vw)}
+    body[data-view="tablet"] .main-grid{grid-template-columns:1fr}
+    body[data-view="tablet"] .exports{grid-template-columns:repeat(2,1fr)}
+    body[data-view="desktop"] .app{width:min(1420px, 96vw)}
+  </style>
+</head>
+<body data-view="auto">
+  <div class="app">
+    <section class="hero">
+      <div class="hero-main">
+        <div class="hero-eyebrow">Registro operativo</div>
+        <h1>Control de corte de cable</h1>
+        <p>Registre cada corte, valide el remanente y genere el Excel de control.</p>
+        <div class="hero-chips" aria-label="Funciones principales">
+          <span class="hero-chip">✓ Columnas separadas</span>
+          <span class="hero-chip">✓ Resumen automático</span>
+          <span class="hero-chip">✓ Listo para compartir</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn btn-ghost btn-small" id="btnSound" type="button">Sonido: ON</button>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <span class="view-label">Vista:</span>
+        <button type="button" class="btn-small active-view" data-view-btn="auto">Auto</button>
+        <button type="button" class="btn-small" data-view-btn="mobile">Móvil</button>
+        <button type="button" class="btn-small" data-view-btn="tablet">Tablet</button>
+        <button type="button" class="btn-small" data-view-btn="desktop">Escritorio</button>
+      </div>
+      <div class="toolbar-group">
+        <button type="button" class="btn-small" id="btnRefresh">Actualizar vista y diseño</button>
+        <button type="button" class="btn-small" id="btnToday">Fecha y hora actual</button>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-header">
+          <h2>Formato mínimo de registro</h2>
+          <span class="version-pill" style="color:var(--navy); background:#fff; border-color:var(--line)">Formato listo para Excel</span>
+        </div>
+        <div class="card-body">
+          <form id="cutForm" autocomplete="off">
+            <div class="rule-box"><span>✓</span><div><strong>Diligencie lo esencial:</strong> complete los campos marcados con * y valide el remanente antes de guardar.</div></div>
+            <fieldset>
+              <legend>1. Solicitud y pedido</legend>
+              <div class="form-grid">
+                <div class="field col-3"><label for="fechaSolicitud">Fecha solicitud *</label><input type="date" id="fechaSolicitud" required /></div>
+                <div class="field col-3"><label for="horaSolicitud">Hora solicitud *</label><input type="time" id="horaSolicitud" required /></div>
+                <div class="field col-3"><label for="pedido">Pedido / requerimiento *</label><input id="pedido" required placeholder="Ej. PV-000123" /></div>
+                <div class="field col-3"><label for="clienteProceso">Cliente / proceso *</label><input id="clienteProceso" required placeholder="Cliente o área" /></div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>2. Cable solicitado</legend>
+              <div class="form-grid">
+                <div class="field col-4"><label for="referencia">Referencia *</label><input id="referencia" required placeholder="Referencia comercial" /></div>
+                <div class="field col-2"><label for="calibre">Calibre</label><input id="calibre" placeholder="Ej. 2/0" /></div>
+                <div class="field col-2"><label for="tipoCable">Tipo</label><input id="tipoCable" placeholder="THHN / ACSR" /></div>
+                <div class="field col-2"><label for="colorCable">Color</label><input id="colorCable" placeholder="Negro" /></div>
+                <div class="field col-2"><label for="metrosSolicitados">Metros *</label><input type="number" min="0" step="0.01" id="metrosSolicitados" required placeholder="0" /></div>
+                <div class="field col-12"><label for="ubicacionProducto">Ubicación del producto</label><input id="ubicacionProducto" placeholder="Bodega / pasillo / posición" /></div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>3. Carrete y remanente</legend>
+              <div class="form-grid">
+                <div class="field col-4"><label for="carreteLote">Carrete / lote *</label><input id="carreteLote" required placeholder="ID carrete o lote" /></div>
+                <div class="field col-2"><label for="disponibleAntes">Disponible antes *</label><input type="number" min="0" step="0.01" id="disponibleAntes" required placeholder="0" /></div>
+                <div class="field col-2"><label for="remanenteProyectado">Remanente proyectado</label><input id="remanenteProyectado" class="readonly" readonly /></div>
+                <div class="field col-4"><label for="restriccionRemanente">Restricción calculada</label><input id="restriccionRemanente" class="readonly" readonly /></div>
+                <div class="field col-4"><label for="autorizadoMenor50">Autorización menor a 50 m</label><select id="autorizadoMenor50"><option value="NO">No aplica / No autorizada</option><option value="SI">Sí, autorizada</option></select></div>
+                <div class="field col-4"><label for="autorizadoPor">Autorizado por</label><select id="autorizadoPor"><option value="">No aplica</option><option>Gerencia</option><option>Jefatura Logística</option></select></div>
+                <div class="field col-4"><label for="motivoAutorizacion">Motivo de autorización</label><input id="motivoAutorizacion" placeholder="Solo si queda <50 m" /></div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>4. Corte y validación</legend>
+              <div class="form-grid">
+                <div class="field col-2"><label for="fechaCorte">Fecha corte</label><input type="date" id="fechaCorte" /></div>
+                <div class="field col-2"><label for="horaInicio">Hora inicio</label><input type="time" id="horaInicio" /></div>
+                <div class="field col-2"><label for="horaFin">Hora final</label><input type="time" id="horaFin" /></div>
+                <div class="field col-2"><label for="metrajeFinal">Metraje final *</label><input type="number" min="0" step="0.01" id="metrajeFinal" required placeholder="0" /></div>
+                <div class="field col-2"><label for="remanenteReal">Remanente real</label><input type="number" min="0" step="0.01" id="remanenteReal" placeholder="0" /></div>
+                <div class="field col-2"><label for="evidenciaTexto">Evidencia / registro</label><input id="evidenciaTexto" placeholder="Foto, remisión, etc." /></div>
+                <div class="col-12 checks">
+                  <label class="check-card"><input type="checkbox" id="corteUniforme" checked /> Corte uniforme</label>
+                  <label class="check-card"><input type="checkbox" id="tramoRotulado" checked /> Tramo rotulado</label>
+                  <label class="check-card"><input type="checkbox" id="evidenciaRegistro" checked /> Evidencia/registro realizado</label>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>5. Franja de atención</legend>
+              <div class="form-grid">
+                <div class="field col-12"><label for="franjaAtencion">Franja aplicable *</label><input type="hidden" id="franjaAtencion" value="MISMO_DIA_TARDE" required />
+                  <div class="segmented-control" data-segment="franjaAtencion" role="radiogroup" aria-label="Franja aplicable">
+                    <button type="button" class="seg-option active" data-value="MISMO_DIA_TARDE" aria-pressed="true"><span class="seg-title">Mismo día</span><span class="seg-sub">En la tarde</span></button>
+                    <button type="button" class="seg-option" data-value="DIA_HABIL_SIGUIENTE_MANANA" aria-pressed="false"><span class="seg-title">Día hábil siguiente</span><span class="seg-sub">En la mañana</span></button>
+                    <button type="button" class="seg-option stop" data-value="SUSPENDIDO_NOVEDAD_AUTORIZACION" aria-pressed="false"><span class="seg-title">Suspendido</span><span class="seg-sub">Novedad / autorización</span></button>
+                  </div>
+                  <div class="inline-tools"><button type="button" class="btn-small" id="btnAutoFranja">Calcular franja automática</button><span class="adaptive-hint">También puede seleccionarse manualmente; el valor queda guardado en el registro.</span></div>
+                </div>
+                <div class="field col-6"><label for="cumpleTiempo">Cumple tiempo</label><select id="cumpleTiempo"><option value="SI">Sí</option><option value="NO">No</option><option value="PENDIENTE">Pendiente</option></select></div>
+                <div class="col-12 rule-box"><span>⏱️</span><div><strong>Regla:</strong> solicitud completa recibida hasta las 11:00 a. m. queda para la tarde del mismo día. Solicitud completa después de las 11:00 a. m. queda para la mañana del día hábil siguiente.</div></div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>6. Responsable y novedad</legend>
+              <div class="form-grid">
+                <div class="field col-4"><label for="responsableChequeo">Responsable recolección / chequeo</label><input id="responsableChequeo" placeholder="Nombre" /></div>
+                <div class="field col-4"><label for="responsableCorte">Responsable del corte *</label><input id="responsableCorte" required placeholder="Nombre" /></div>
+                <div class="field col-4"><label for="novedad">Novedad *</label><select id="novedad" required><option value="SIN_NOVEDAD">Sin novedad</option><option value="RETRABAJO_NO_CONFORME">Retrabajo / no conforme</option><option value="SUSPENDIDO">Suspendido</option><option value="OTRA">Otra</option></select></div>
+                <div class="field col-12"><label for="observacion">Observación</label><textarea id="observacion" placeholder="Detalle breve de novedad, autorización o retrabajo"></textarea></div>
+                <div class="col-12 status-panel" id="statusPanel">
+                  <div class="status-label">Estado calculado del registro</div>
+                  <div class="status-value" id="estadoCalculado">Pendiente</div>
+                  <div class="status-detail" id="estadoDetalle">Complete los datos para calcular el estado.</div>
+                </div>
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button class="btn-primary" type="submit">Guardar registro</button>
+              <button type="button" id="btnClearForm">Limpiar formulario</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="card-header">
+          <h2>Resumen de registros</h2>
+          <span class="version-pill" style="color:var(--navy); background:#fff; border-color:var(--line)">Seguimiento del día</span>
+        </div>
+        <div class="card-body">
+          <div class="dashboard-grid" id="kpiGrid"></div>
+
+          <div class="chart-card">
+            <p class="chart-title">Cumplimiento general</p>
+            <div class="donut-wrap">
+              <svg class="donut" viewBox="0 0 120 120" role="img" aria-label="Porcentaje de cumplimiento">
+                <circle cx="60" cy="60" r="48" stroke="#edf2f7" stroke-width="14" fill="none" />
+                <circle id="donutValue" cx="60" cy="60" r="48" stroke="var(--green)" stroke-width="14" stroke-linecap="round" fill="none" stroke-dasharray="0 301.59" transform="rotate(-90 60 60)" />
+                <text id="donutText" x="60" y="58" text-anchor="middle" font-size="22">0%</text>
+                <text x="60" y="76" text-anchor="middle" font-size="9" fill="#667085">Conforme</text>
+              </svg>
+              <div class="legend" id="legendStatus"></div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <p class="chart-title">Distribución por estado</p>
+            <div class="bars" id="statusBars"></div>
+          </div>
+
+          <div class="chart-card">
+            <p class="chart-title">Exportar y compartir control</p>
+            <div class="exports">
+              <button type="button" class="btn-green" data-export="xls">Excel .xlsx + correo</button>
+              <button type="button" class="btn-primary" data-export="csv">Plano CSV ;</button>
+              <button type="button" class="btn-orange" data-export="txt">Plano TXT |</button>
+              <button type="button" data-export="json">Respaldo JSON</button>
+              <button type="button" id="btnEmail" class="btn-primary">Compartir último Excel</button>
+              <button type="button" id="btnDeleteAll" class="btn-red">Borrar registros</button>
+            </div>
+            <div class="email-config simple-email-config">
+              <div>
+                <label for="emailTo">Correo destino</label>
+                <input id="emailTo" type="email" value="j.perez@ei.com.co" inputmode="email" />
+              </div>
+              <div class="inline-tools">
+                <button type="button" id="btnSaveEmailConfig">Guardar correo</button>
+                <button type="button" id="btnOpenMail" class="btn-orange">Abrir correo con resumen</button>
+              </div>
+            </div>
+            <div class="note"><strong>Uso operativo:</strong> al exportar en Excel, el archivo se descarga y se prepara el resumen. En celular, use <strong>Compartir último Excel</strong> para anexar el archivo desde el menú del dispositivo. Si el equipo no permite anexarlo solo, se abre el correo con el resumen y el archivo queda en Descargas para adjuntarlo.</div><div class="share-panel" id="sharePanel"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="card table-card">
+      <div class="card-header">
+        <h2>Registros acumulados</h2>
+        <span class="version-pill" style="color:var(--navy); background:#fff; border-color:var(--line)" id="countPill">0 registros</span>
+      </div>
+      <div class="card-body">
+        <div class="table-tools">
+          <input class="search" id="searchInput" placeholder="Buscar por pedido, cliente, cable, carrete o responsable..." />
+          <div class="toolbar-group">
+            <select id="filterStatus" style="max-width:240px"><option value="TODOS">Todos los estados</option><option value="CONFORME">Conforme</option><option value="AUTORIZADO">Autorizado</option><option value="SUSPENDIDO">Suspendido</option><option value="NO_CONFORME">No conforme</option><option value="REVISAR">Revisar</option></select>
+            <button type="button" class="btn-small" id="btnPrint">Imprimir</button>
+          </div>
+        </div>
+        <div id="tableContainer"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const VERSION = '2.5.0-CORREO-SIMPLE';
+    const STORAGE_KEY = 'control_corte_cable_v2';
+    const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
+    const EMAIL_TO_KEY = 'control_corte_email_to';
+    let soundEnabled = true;
+    let records = loadRecords();
+    let lastExportFile = null;
+    let franjaManual = false;
+
+    const columns = [
+      ['CONSECUTIVO','Consecutivo'],
+      ['FECHA_SOLICITUD','Fecha Solicitud'],
+      ['HORA_SOLICITUD','Hora Solicitud'],
+      ['PEDIDO_REQUERIMIENTO','Pedido/Requerimiento'],
+      ['CLIENTE_PROCESO','Cliente/Proceso'],
+      ['REFERENCIA_CABLE','Referencia Cable'],
+      ['CALIBRE','Calibre'],
+      ['TIPO_CABLE','Tipo Cable'],
+      ['COLOR','Color'],
+      ['METROS_SOLICITADOS','Metros Solicitados'],
+      ['UBICACION_PRODUCTO','Ubicación Producto'],
+      ['CARRETE_LOTE','Carrete/Lote'],
+      ['METROS_DISPONIBLES_ANTES','Metros Disponibles Antes'],
+      ['REMANENTE_PROYECTADO','Remanente Proyectado'],
+      ['RESTRICCION_REMANENTE','Restricción Remanente'],
+      ['AUTORIZADO_MENOR_50','Autorizado Menor 50'],
+      ['AUTORIZADO_POR','Autorizado Por'],
+      ['MOTIVO_AUTORIZACION','Motivo Autorización'],
+      ['RESPONSABLE_CHEQUEO','Responsable Chequeo'],
+      ['RESPONSABLE_CORTE','Responsable Corte'],
+      ['FECHA_CORTE','Fecha Corte'],
+      ['HORA_INICIO','Hora Inicio'],
+      ['HORA_FIN','Hora Fin'],
+      ['METRAJE_FINAL','Metraje Final'],
+      ['REMANENTE_REAL','Remanente Real'],
+      ['CORTE_UNIFORME','Corte Uniforme'],
+      ['TRAMO_ROTULADO','Tramo Rotulado'],
+      ['EVIDENCIA_REGISTRO','Evidencia Registro'],
+      ['EVIDENCIA_DESCRIPCION','Evidencia Descripción'],
+      ['FRANJA_ATENCION','Franja Atención'],
+      ['CUMPLE_TIEMPO','Cumple Tiempo'],
+      ['NOVEDAD','Novedad'],
+      ['OBSERVACION','Observación'],
+      ['CUMPLE_REMANENTE','Cumple Remanente'],
+      ['CUMPLE_CALIDAD','Cumple Calidad'],
+      ['ESTADO_CORTE','Estado Corte'],
+      ['FECHA_REGISTRO_SISTEMA','Fecha Registro Sistema'],
+      ['HORA_REGISTRO_SISTEMA','Hora Registro Sistema']
+    ];
+
+    const $ = (id)=>document.getElementById(id);
+    const val = (id)=>($(id)?.value || '').trim();
+    const num = (id)=>parseFloat(String(val(id)).replace(',','.')) || 0;
+    const yn = (id)=>$(id).checked ? 'SI' : 'NO';
+
+    function loadRecords(){
+      try{return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []}
+      catch(e){return []}
+    }
+    function saveRecords(){localStorage.setItem(STORAGE_KEY, JSON.stringify(records));}
+    function pad(n){return String(n).padStart(2,'0')}
+    function nowParts(){const d=new Date(); return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`, time:`${pad(d.getHours())}:${pad(d.getMinutes())}`, stamp:`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`}}
+    function todayHuman(){const n=nowParts(); return n.date.split('-').reverse().join('/') + ' ' + n.time}
+    function normalizeDecimal(v){ if(v === '' || v === null || v === undefined) return ''; const n = Number(String(v).replace(',','.')); return Number.isFinite(n) ? String(n.toFixed(2)).replace(/\.00$/,'') : String(v); }
+    function cleanText(value){return String(value ?? '').replace(/\s+/g,' ').trim();}
+    function escapeHtml(value){return String(value ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));}
+
+    function beep(type='ok'){
+      if(!soundEnabled) return;
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const map = {ok:[660,.045], click:[420,.035], export:[780,.055], error:[180,.09]};
+        const [freq,dur] = map[type] || map.ok;
+        osc.frequency.value = freq;
+        osc.type = type === 'error' ? 'sawtooth' : 'sine';
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(type === 'error' ? 0.07 : 0.04, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+        osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + dur + .02);
+      }catch(e){}
+    }
+    function toast(message, type='ok'){
+      const t=$('toast'); t.textContent=message; t.classList.add('show'); beep(type); clearTimeout(toast._timer); toast._timer=setTimeout(()=>t.classList.remove('show'), 2600);
+    }
+
+    function setCurrentDateTime(){
+      const n=nowParts();
+      if(!$('fechaSolicitud').value) $('fechaSolicitud').value=n.date;
+      if(!$('horaSolicitud').value) $('horaSolicitud').value=n.time;
+      if(!$('fechaCorte').value) $('fechaCorte').value=n.date;
+    }
+
+    function calcRemanent(){
+      const disponible = num('disponibleAntes');
+      const solicitado = num('metrosSolicitados');
+      const rem = disponible && solicitado ? +(disponible - solicitado).toFixed(2) : 0;
+      $('remanenteProyectado').value = disponible || solicitado ? normalizeDecimal(rem) : '';
+      $('remanenteReal').placeholder = rem ? normalizeDecimal(rem) : '0';
+      let restriccion = '';
+      if(disponible || solicitado){
+        if(rem > 50) restriccion = '>50 m';
+        else if(rem === 50) restriccion = '=50 m';
+        else restriccion = '<50 m';
+      }
+      $('restriccionRemanente').value = restriccion;
+      autoFranja();
+      updateStatusPanel();
+    }
+
+    function setSegmentValue(id, value, manual=false){
+      const input = $(id);
+      if(!input) return;
+      input.value = value;
+      if(id === 'franjaAtencion' && manual) franjaManual = true;
+      document.querySelectorAll(`[data-segment="${id}"] .seg-option`).forEach(btn=>{
+        const active = btn.dataset.value === value;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      updateStatusPanel();
+    }
+
+    function autoFranja(force=false){
+      if(franjaManual && !force) return;
+      const h = val('horaSolicitud');
+      if(!h) return;
+      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const authorized = val('autorizadoMenor50') === 'SI';
+      let nextValue = h <= '11:00' ? 'MISMO_DIA_TARDE' : 'DIA_HABIL_SIGUIENTE_MANANA';
+      if(Number.isFinite(rem) && rem < 50 && !authorized) nextValue = 'SUSPENDIDO_NOVEDAD_AUTORIZACION';
+      setSegmentValue('franjaAtencion', nextValue, false);
+    }
+
+    function computeStatusFromForm(){
+      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const authorized = val('autorizadoMenor50') === 'SI';
+      const hasAuthData = authorized && val('autorizadoPor') && val('motivoAutorizacion');
+      const qualityOk = $('corteUniforme').checked && $('tramoRotulado').checked && $('evidenciaRegistro').checked;
+      const novedad = val('novedad');
+      const franja = val('franjaAtencion');
+      const cumpleTiempo = val('cumpleTiempo');
+      if(!val('pedido') || !val('referencia') || !val('carreteLote')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete pedido, referencia y carrete para calcular el estado.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rem < 50 && !authorized) return {estado:'SUSPENDIDO', label:'Suspendido', detail:'El remanente queda menor a 50 m. No se permite cortar sin autorización documentada.', cls:'status-stop'};
+      if(Number.isFinite(rem) && rem < 50 && authorized && !hasAuthData) return {estado:'REVISAR', label:'Revisar autorización', detail:'El corte menor a 50 m exige autorizado por y motivo específico.', cls:'status-warn'};
+      if(novedad === 'RETRABAJO_NO_CONFORME' || !qualityOk) return {estado:'NO_CONFORME', label:'No conforme', detail:'Existe retrabajo/no conformidad o falta un control de calidad.', cls:'status-stop'};
+      if(franja === 'SUSPENDIDO_NOVEDAD_AUTORIZACION') return {estado:'SUSPENDIDO', label:'Suspendido', detail:'La solicitud quedó suspendida por novedad o autorización pendiente.', cls:'status-stop'};
+      if(cumpleTiempo === 'NO') return {estado:'REVISAR', label:'Revisar tiempo', detail:'El registro indica incumplimiento de la franja de atención.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rem < 50 && authorized && hasAuthData) return {estado:'AUTORIZADO', label:'Autorizado <50 m', detail:'Corte permitido por excepción documentada.', cls:'status-auth'};
+      return {estado:'CONFORME', label:'Conforme', detail:'Registro cumple remanente, calidad y trazabilidad mínima.', cls:'status-ok'};
+    }
+
+    function updateStatusPanel(){
+      const st = computeStatusFromForm();
+      const panel=$('statusPanel');
+      panel.className='col-12 status-panel ' + st.cls;
+      $('estadoCalculado').textContent = st.label;
+      $('estadoDetalle').textContent = st.detail;
+    }
+
+    function collectRecord(){
+      const status = computeStatusFromForm();
+      const n=nowParts();
+      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const metrajeFinal = num('metrajeFinal');
+      const remRealRaw = val('remanenteReal');
+      const remReal = remRealRaw ? parseFloat(remRealRaw.replace(',','.')) : rem;
+      const qualityOk = $('corteUniforme').checked && $('tramoRotulado').checked && $('evidenciaRegistro').checked;
+      let cumpleRemanente = 'NO';
+      if(Number.isFinite(rem)){
+        cumpleRemanente = rem >= 50 ? 'SI' : (val('autorizadoMenor50') === 'SI' ? 'AUTORIZADO' : 'NO');
+      }
+      return {
+        id: crypto.randomUUID ? crypto.randomUUID() : 'REG-' + Date.now(),
+        CONSECUTIVO: nextConsecutive(),
+        FECHA_SOLICITUD: val('fechaSolicitud'),
+        HORA_SOLICITUD: val('horaSolicitud'),
+        PEDIDO_REQUERIMIENTO: cleanText(val('pedido')),
+        CLIENTE_PROCESO: cleanText(val('clienteProceso')),
+        REFERENCIA_CABLE: cleanText(val('referencia')),
+        CALIBRE: cleanText(val('calibre')),
+        TIPO_CABLE: cleanText(val('tipoCable')),
+        COLOR: cleanText(val('colorCable')),
+        METROS_SOLICITADOS: normalizeDecimal(val('metrosSolicitados')),
+        UBICACION_PRODUCTO: cleanText(val('ubicacionProducto')),
+        CARRETE_LOTE: cleanText(val('carreteLote')),
+        METROS_DISPONIBLES_ANTES: normalizeDecimal(val('disponibleAntes')),
+        REMANENTE_PROYECTADO: normalizeDecimal($('remanenteProyectado').value),
+        RESTRICCION_REMANENTE: $('restriccionRemanente').value,
+        AUTORIZADO_MENOR_50: val('autorizadoMenor50'),
+        AUTORIZADO_POR: cleanText(val('autorizadoPor')),
+        MOTIVO_AUTORIZACION: cleanText(val('motivoAutorizacion')),
+        RESPONSABLE_CHEQUEO: cleanText(val('responsableChequeo')),
+        RESPONSABLE_CORTE: cleanText(val('responsableCorte')),
+        FECHA_CORTE: val('fechaCorte'),
+        HORA_INICIO: val('horaInicio'),
+        HORA_FIN: val('horaFin'),
+        METRAJE_FINAL: normalizeDecimal(metrajeFinal),
+        REMANENTE_REAL: normalizeDecimal(remReal),
+        CORTE_UNIFORME: yn('corteUniforme'),
+        TRAMO_ROTULADO: yn('tramoRotulado'),
+        EVIDENCIA_REGISTRO: yn('evidenciaRegistro'),
+        EVIDENCIA_DESCRIPCION: cleanText(val('evidenciaTexto')),
+        FRANJA_ATENCION: val('franjaAtencion'),
+        CUMPLE_TIEMPO: val('cumpleTiempo'),
+        NOVEDAD: val('novedad'),
+        OBSERVACION: cleanText(val('observacion')),
+        CUMPLE_REMANENTE: cumpleRemanente,
+        CUMPLE_CALIDAD: qualityOk ? 'SI' : 'NO',
+        ESTADO_CORTE: status.estado,
+        FECHA_REGISTRO_SISTEMA: n.date,
+        HORA_REGISTRO_SISTEMA: n.time
+      };
+    }
+
+    function nextConsecutive(){
+      const year = new Date().getFullYear();
+      const max = records.reduce((acc,r)=>{
+        const m = String(r.CONSECUTIVO||'').match(/-(\d+)$/); return Math.max(acc, m ? Number(m[1]) : 0);
+      },0)+1;
+      return `CC-${year}-${String(max).padStart(5,'0')}`;
+    }
+
+    function validateBeforeSave(){
+      const required = ['fechaSolicitud','horaSolicitud','pedido','clienteProceso','referencia','metrosSolicitados','carreteLote','disponibleAntes','metrajeFinal','responsableCorte'];
+      for(const id of required){ if(!val(id)){ $(id).focus(); toast('Falta completar: ' + document.querySelector(`label[for="${id}"]`).textContent.replace('*',''), 'error'); return false; } }
+      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      if(rem < 50 && val('autorizadoMenor50') === 'SI' && (!val('autorizadoPor') || !val('motivoAutorizacion'))){
+        toast('Para remanente menor a 50 m autorizado, complete autorizado por y motivo.', 'error'); return false;
+      }
+      if(num('metrosSolicitados') > num('disponibleAntes')){ toast('Los metros solicitados no pueden superar el metraje disponible.', 'error'); return false; }
+      return true;
+    }
+
+    function clearForm(full=false){
+      $('cutForm').reset();
+      franjaManual=false;
+      setCurrentDateTime();
+      $('corteUniforme').checked=true; $('tramoRotulado').checked=true; $('evidenciaRegistro').checked=true;
+      setSegmentValue('franjaAtencion', 'MISMO_DIA_TARDE', false);
+      calcRemanent(); updateStatusPanel();
+      if(full) toast('Formulario limpio', 'click');
+    }
+
+    function saveRecord(e){
+      e.preventDefault();
+      calcRemanent();
+      if(!validateBeforeSave()) return;
+      records.unshift(collectRecord());
+      saveRecords();
+      renderAll();
+      clearForm(false);
+      toast('Registro guardado correctamente', 'ok');
+    }
+
+    function statusPill(status){
+      const map={CONFORME:['pill-ok','Conforme'], AUTORIZADO:['pill-auth','Autorizado'], SUSPENDIDO:['pill-stop','Suspendido'], NO_CONFORME:['pill-stop','No conforme'], REVISAR:['pill-warn','Revisar'], PENDIENTE:['pill-blue','Pendiente']};
+      const [cls,label]=map[status] || ['pill-blue',status];
+      return `<span class="pill ${cls}">${label}</span>`;
+    }
+    function franjaLabel(v){return ({MISMO_DIA_TARDE:'Mismo día tarde', DIA_HABIL_SIGUIENTE_MANANA:'Día hábil sig. mañana', SUSPENDIDO_NOVEDAD_AUTORIZACION:'Suspendido'})[v] || v;}
+
+    function getFilteredRecords(){
+      const q=val('searchInput').toLowerCase();
+      const f=val('filterStatus');
+      return records.filter(r=>{
+        const statusOk = f === 'TODOS' || r.ESTADO_CORTE === f;
+        const qOk = !q || [r.PEDIDO_REQUERIMIENTO,r.CLIENTE_PROCESO,r.REFERENCIA_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO].join(' ').toLowerCase().includes(q);
+        return statusOk && qOk;
+      });
+    }
+
+    function renderTable(){
+      const list=getFilteredRecords();
+      $('countPill').textContent = `${records.length} registro${records.length===1?'':'s'}`;
+      if(!list.length){ $('tableContainer').innerHTML = '<div class="empty">No hay registros para mostrar.</div>'; return; }
+      const rows = list.map(r=>`
+        <tr>
+          <td><strong>${escapeHtml(r.CONSECUTIVO)}</strong><br><span style="color:#667085">${escapeHtml(r.FECHA_SOLICITUD)} ${escapeHtml(r.HORA_SOLICITUD)}</span></td>
+          <td>${escapeHtml(r.PEDIDO_REQUERIMIENTO)}<br><span style="color:#667085">${escapeHtml(r.CLIENTE_PROCESO)}</span></td>
+          <td>${escapeHtml(r.REFERENCIA_CABLE)}<br><span style="color:#667085">${escapeHtml([r.CALIBRE,r.TIPO_CABLE,r.COLOR].filter(Boolean).join(' · '))}</span></td>
+          <td>${escapeHtml(r.CARRETE_LOTE)}<br><span style="color:#667085">Disp: ${escapeHtml(r.METROS_DISPONIBLES_ANTES)} m · Rem: ${escapeHtml(r.REMANENTE_PROYECTADO)} m</span></td>
+          <td>${escapeHtml(r.RESTRICCION_REMANENTE)}<br>${r.AUTORIZADO_MENOR_50==='SI'?'<span class="pill pill-auth">Autorizado</span>':''}</td>
+          <td>${escapeHtml(r.METRAJE_FINAL)} m<br><span style="color:#667085">Real: ${escapeHtml(r.REMANENTE_REAL)} m</span></td>
+          <td>${escapeHtml(r.RESPONSABLE_CORTE)}<br><span style="color:#667085">Chequeo: ${escapeHtml(r.RESPONSABLE_CHEQUEO||'N/A')}</span></td>
+          <td>${escapeHtml(franjaLabel(r.FRANJA_ATENCION))}<br><span style="color:#667085">Tiempo: ${escapeHtml(r.CUMPLE_TIEMPO)}</span></td>
+          <td>${statusPill(r.ESTADO_CORTE)}<br><span style="color:#667085">Calidad: ${escapeHtml(r.CUMPLE_CALIDAD)}</span></td>
+          <td class="row-actions"><button type="button" class="btn-small" onclick="editRecord('${r.id}')">Editar</button><button type="button" class="btn-small btn-red" onclick="deleteRecord('${r.id}')">Eliminar</button></td>
+        </tr>`).join('');
+      $('tableContainer').innerHTML = `<div class="table-scroll"><table><thead><tr><th>Consecutivo</th><th>Pedido / Cliente</th><th>Cable</th><th>Carrete</th><th>Restricción</th><th>Corte</th><th>Responsable</th><th>Franja</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+
+    function countByStatus(){
+      const counts={CONFORME:0,AUTORIZADO:0,SUSPENDIDO:0,NO_CONFORME:0,REVISAR:0};
+      records.forEach(r=>{counts[r.ESTADO_CORTE]=(counts[r.ESTADO_CORTE]||0)+1});
+      return counts;
+    }
+
+    function renderDashboard(){
+      const total=records.length;
+      const counts=countByStatus();
+      const conformes=counts.CONFORME || 0;
+      const autorizados=counts.AUTORIZADO || 0;
+      const noConformes=(counts.NO_CONFORME||0)+(counts.SUSPENDIDO||0)+(counts.REVISAR||0);
+      const menor50=records.filter(r=>r.RESTRICCION_REMANENTE === '<50 m').length;
+      const cumplimiento = total ? Math.round((conformes/total)*100) : 0;
+      const tiempoOk = records.filter(r=>r.CUMPLE_TIEMPO === 'SI').length;
+      $('kpiGrid').innerHTML = [
+        ['Total registros', total, 'blue'],
+        ['% conformes', cumplimiento + '%', 'good'],
+        ['Conformes', conformes, 'good'],
+        ['Autorizados <50 m', autorizados, 'warn'],
+        ['No conformes / suspendidos', noConformes, 'bad'],
+        ['Cumplen tiempo', total ? Math.round((tiempoOk/total)*100)+'%' : '0%', 'blue']
+      ].map(([label,value,cls])=>`<div class="kpi ${cls}"><div class="value">${value}</div><div class="label">${label}</div></div>`).join('');
+      renderDonut(cumplimiento);
+      renderBars(counts, total);
+      $('legendStatus').innerHTML = [
+        ['#0f8f46','Conforme',conformes],['#f36b13','Autorizado',autorizados],['#c91523','No conformes / suspendidos',noConformes],['#f3a400','Remanentes <50 m',menor50]
+      ].map(([c,l,v])=>`<div class="legend-item"><span class="dot" style="background:${c}"></span>${l}: <strong>${v}</strong></div>`).join('');
+    }
+
+    function renderDonut(percent){
+      const circ=2*Math.PI*48;
+      $('donutValue').setAttribute('stroke-dasharray', `${(percent/100)*circ} ${circ}`);
+      $('donutText').textContent = percent + '%';
+      $('donutValue').setAttribute('stroke', percent >= 90 ? 'var(--green)' : percent >= 70 ? 'var(--amber)' : 'var(--red)');
+    }
+
+    function renderBars(counts,total){
+      const items=[['CONFORME','Conforme','fill-green'],['AUTORIZADO','Autorizado','fill-orange'],['REVISAR','Revisar','fill-amber'],['SUSPENDIDO','Suspendido','fill-red'],['NO_CONFORME','No conforme','fill-red']];
+      $('statusBars').innerHTML = items.map(([key,label,cls])=>{
+        const value=counts[key]||0; const pct=total?Math.round((value/total)*100):0;
+        return `<div class="bar-row"><span>${label}</span><div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div><strong>${value}</strong></div>`;
+      }).join('');
+    }
+
+    function renderAll(){renderDashboard(); renderTable();}
+
+    window.deleteRecord = function(id){
+      if(!confirm('¿Eliminar este registro?')) return;
+      records = records.filter(r=>r.id!==id); saveRecords(); renderAll(); toast('Registro eliminado', 'click');
+    }
+
+    window.editRecord = function(id){
+      const r=records.find(x=>x.id===id); if(!r) return;
+      $('fechaSolicitud').value=r.FECHA_SOLICITUD||''; $('horaSolicitud').value=r.HORA_SOLICITUD||''; $('pedido').value=r.PEDIDO_REQUERIMIENTO||''; $('clienteProceso').value=r.CLIENTE_PROCESO||'';
+      $('referencia').value=r.REFERENCIA_CABLE||''; $('calibre').value=r.CALIBRE||''; $('tipoCable').value=r.TIPO_CABLE||''; $('colorCable').value=r.COLOR||''; $('metrosSolicitados').value=r.METROS_SOLICITADOS||''; $('ubicacionProducto').value=r.UBICACION_PRODUCTO||'';
+      $('carreteLote').value=r.CARRETE_LOTE||''; $('disponibleAntes').value=r.METROS_DISPONIBLES_ANTES||''; $('autorizadoMenor50').value=r.AUTORIZADO_MENOR_50||'NO'; $('autorizadoPor').value=r.AUTORIZADO_POR||''; $('motivoAutorizacion').value=r.MOTIVO_AUTORIZACION||'';
+      $('fechaCorte').value=r.FECHA_CORTE||''; $('horaInicio').value=r.HORA_INICIO||''; $('horaFin').value=r.HORA_FIN||''; $('metrajeFinal').value=r.METRAJE_FINAL||''; $('remanenteReal').value=r.REMANENTE_REAL||''; $('evidenciaTexto').value=r.EVIDENCIA_DESCRIPCION||'';
+      $('corteUniforme').checked=r.CORTE_UNIFORME==='SI'; $('tramoRotulado').checked=r.TRAMO_ROTULADO==='SI'; $('evidenciaRegistro').checked=r.EVIDENCIA_REGISTRO==='SI';
+      franjaManual = true; setSegmentValue('franjaAtencion', r.FRANJA_ATENCION||'MISMO_DIA_TARDE', false); $('cumpleTiempo').value=r.CUMPLE_TIEMPO||'SI'; $('responsableChequeo').value=r.RESPONSABLE_CHEQUEO||''; $('responsableCorte').value=r.RESPONSABLE_CORTE||''; $('novedad').value=r.NOVEDAD||'SIN_NOVEDAD'; $('observacion').value=r.OBSERVACION||'';
+      records=records.filter(x=>x.id!==id); saveRecords(); calcRemanent(); renderAll(); window.scrollTo({top:0, behavior:'smooth'}); toast('Registro cargado para edición', 'click');
+    }
+
+    function rowsForExport(){
+      return records.slice().reverse().map(r => Object.fromEntries(columns.map(([key])=>[key, r[key] ?? ''])));
+    }
+
+    function delimiterEscape(value, delimiter){
+      const str=String(value ?? '');
+      if(str.includes('"') || str.includes('\n') || str.includes('\r') || str.includes(delimiter)) return '"' + str.replace(/"/g,'""') + '"';
+      return str;
+    }
+
+    function makeDelimited(delimiter){
+      const rows = rowsForExport();
+      const header = columns.map(c=>c[0]).join(delimiter);
+      const body = rows.map(r=>columns.map(([key])=>delimiterEscape(r[key], delimiter)).join(delimiter)).join('\r\n');
+      return '\ufeff' + header + (body ? '\r\n' + body : '');
+    }
+
+    function xmlEscape(value){return String(value ?? '').replace(/[<>&"']/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[m]));}
+    function colName(n){let s=''; while(n>=0){s=String.fromCharCode((n%26)+65)+s; n=Math.floor(n/26)-1;} return s;}
+    function makeSheetXml(){
+      const rows = rowsForExport();
+      const header = columns.map(([key])=>key);
+      const allRows = [header, ...rows.map(r=>columns.map(([key])=>r[key] ?? ''))];
+      const xmlRows = allRows.map((row, rIdx)=>{
+        const r = rIdx + 1;
+        const cells = row.map((value, cIdx)=>`<c r="${colName(cIdx)}${r}" t="inlineStr"><is><t>${xmlEscape(value)}</t></is></c>`).join('');
+        return `<row r="${r}">${cells}</row>`;
+      }).join('');
+      const lastRef = `${colName(columns.length-1)}${allRows.length}`;
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:${lastRef}"/><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="18"/><sheetData>${xmlRows}</sheetData></worksheet>`;
+    }
+    function crc32(bytes){
+      if(!crc32.table){
+        crc32.table = Array.from({length:256}, (_,n)=>{let c=n; for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); return c>>>0;});
+      }
+      let c=0xffffffff;
+      for(const b of bytes) c = crc32.table[(c ^ b) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+    function u16(view, offset, value){view.setUint16(offset, value, true)}
+    function u32(view, offset, value){view.setUint32(offset, value >>> 0, true)}
+    function zipDateTime(){
+      const d = new Date();
+      const time = (d.getHours()<<11) | (d.getMinutes()<<5) | Math.floor(d.getSeconds()/2);
+      const date = ((d.getFullYear()-1980)<<9) | ((d.getMonth()+1)<<5) | d.getDate();
+      return {time, date};
+    }
+    function makeZip(files){
+      const enc = new TextEncoder();
+      const localParts = [];
+      const centralParts = [];
+      let offset = 0;
+      const {time, date} = zipDateTime();
+      for(const file of files){
+        const nameBytes = enc.encode(file.path);
+        const data = typeof file.data === 'string' ? enc.encode(file.data) : file.data;
+        const crc = crc32(data);
+        const local = new Uint8Array(30 + nameBytes.length);
+        const lv = new DataView(local.buffer);
+        u32(lv,0,0x04034b50); u16(lv,4,20); u16(lv,6,0); u16(lv,8,0); u16(lv,10,time); u16(lv,12,date); u32(lv,14,crc); u32(lv,18,data.length); u32(lv,22,data.length); u16(lv,26,nameBytes.length); u16(lv,28,0);
+        local.set(nameBytes,30);
+        localParts.push(local, data);
+        const central = new Uint8Array(46 + nameBytes.length);
+        const cv = new DataView(central.buffer);
+        u32(cv,0,0x02014b50); u16(cv,4,20); u16(cv,6,20); u16(cv,8,0); u16(cv,10,0); u16(cv,12,time); u16(cv,14,date); u32(cv,16,crc); u32(cv,20,data.length); u32(cv,24,data.length); u16(cv,28,nameBytes.length); u16(cv,30,0); u16(cv,32,0); u16(cv,34,0); u16(cv,36,0); u32(cv,38,0); u32(cv,42,offset);
+        central.set(nameBytes,46);
+        centralParts.push(central);
+        offset += local.length + data.length;
+      }
+      const centralSize = centralParts.reduce((a,p)=>a+p.length,0);
+      const end = new Uint8Array(22);
+      const ev = new DataView(end.buffer);
+      u32(ev,0,0x06054b50); u16(ev,4,0); u16(ev,6,0); u16(ev,8,files.length); u16(ev,10,files.length); u32(ev,12,centralSize); u32(ev,16,offset); u16(ev,20,0);
+      return new Blob([...localParts, ...centralParts, end], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    }
+    function makeXlsxBlob(){
+      const files = [
+        {path:'[Content_Types].xml', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'},
+        {path:'_rels/.rels', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+        {path:'xl/workbook.xml', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="CONTROL_CORTE" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+        {path:'xl/_rels/workbook.xml.rels', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'},
+        {path:'xl/worksheets/sheet1.xml', data:makeSheetXml()}
+      ];
+      return makeZip(files);
+    }
+
+    function makeExcelHtml(){
+      const rows = rowsForExport();
+      const th = columns.map(([key])=>`<th>${escapeHtml(key)}</th>`).join('');
+      const tr = rows.map(r=>`<tr>${columns.map(([key])=>`<td style="mso-number-format:'\\@';">${escapeHtml(r[key])}</td>`).join('')}</tr>`).join('');
+      return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial;font-size:10pt}th{background:#0b2a5b;color:white;font-weight:bold}td,th{border:1px solid #9aa6b2;padding:5px;mso-number-format:'\\@';}.title{font-size:16pt;font-weight:bold;color:#0b2a5b}</style></head><body><div class="title">CONTROL CORTE DE CABLE - ARCHIVO PLANO</div><p>Generado: ${escapeHtml(todayHuman())}</p><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></body></html>`;
+    }
+
+    function downloadBlob(content, filename, mime){
+      const blob = content instanceof Blob ? content : new Blob([content], {type:mime});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(url); a.remove();}, 600);
+      lastExportFile = {blob, filename, mime};
+      return filename;
+    }
+
+    async function exportRecords(format){
+      if(!records.length){toast('No hay registros para exportar.', 'error'); return;}
+      const stamp=nowParts().stamp;
+      let filename='', content='', mime='';
+      if(format === 'xls') { filename = `control_corte_cable_${stamp}.xlsx`; content = makeXlsxBlob(); mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; }
+      if(format === 'csv') { filename = `control_corte_cable_${stamp}.csv`; content = makeDelimited(';'); mime = 'text/csv;charset=utf-8'; }
+      if(format === 'txt') { filename = `control_corte_cable_${stamp}.txt`; content = makeDelimited('|'); mime = 'text/plain;charset=utf-8'; }
+      if(format === 'json') { filename = `respaldo_control_corte_cable_${stamp}.json`; content = JSON.stringify(records, null, 2); mime = 'application/json;charset=utf-8'; }
+      const downloadedName = downloadBlob(content, filename, mime);
+      const summary = buildShareSummary(downloadedName);
+      await copySummaryToClipboard(summary);
+      toast(`Archivo generado: ${downloadedName}`, 'export');
+
+      if(format === 'xls'){
+        await sendLastFileByEmail(true);
+      }else{
+        showSharePanel(`<strong>Archivo generado:</strong> ${escapeHtml(downloadedName)}<br>El archivo quedó descargado. Para envío corporativo con adjunto use preferiblemente la opción Excel.`);
+      }
+    }
+
+    function buildShareSummary(filename=''){
+      const total=records.length; const counts=countByStatus();
+      const noConformes=(counts.NO_CONFORME||0)+(counts.SUSPENDIDO||0)+(counts.REVISAR||0);
+      const latest=records[0];
+      const lastLine = latest ? `
+Último registro: ${latest.PEDIDO_REQUERIMIENTO || '-'} | ${latest.CLIENTE_PROCESO || '-'} | ${latest.REFERENCIA_CABLE || '-'} | Estado: ${latest.ESTADO_CORTE || '-'}` : '';
+      return `Buen día.
+
+Comparto el control de corte de cable generado desde la herramienta operativa.
+
+Archivo adjunto: ${filename || 'control_corte_cable.xlsx'}
+Registros consolidados: ${total}
+Conformes: ${counts.CONFORME||0}
+Autorizados: ${counts.AUTORIZADO||0}
+No conformes / suspendidos / por revisar: ${noConformes}
+Generado: ${todayHuman()}${lastLine}
+
+Quedo atento(a) a la validación correspondiente.`;
+    }
+
+    function showSharePanel(message, type='ok'){
+      const panel=$('sharePanel');
+      if(!panel) return;
+      panel.classList.add('show');
+      panel.innerHTML = message;
+      panel.style.borderColor = type === 'error' ? '#fecaca' : '#bbf7d0';
+      panel.style.background = type === 'error' ? '#fef2f2' : '#f0fdf4';
+      panel.style.color = type === 'error' ? '#7f1d1d' : '#14532d';
+    }
+
+    async function copySummaryToClipboard(summary){
+      try{ await navigator.clipboard.writeText(summary); return true; }catch(e){ return false; }
+    }
+
+    function getEmailTo(){
+      const input = $('emailTo');
+      const saved = localStorage.getItem(EMAIL_TO_KEY);
+      return (input && input.value ? input.value.trim() : saved || DEFAULT_EMAIL_TO) || DEFAULT_EMAIL_TO;
+    }
+
+    function buildMailtoUrl(summary, filename=''){
+      const to = getEmailTo();
+      const subject = `Control de corte de cable - ${todayHuman()}`;
+      const body = `${summary}\n\nArchivo generado: ${filename || 'control_corte_cable.xlsx'}\n\nSi el archivo no quedó adjunto automáticamente, adjúntelo desde Descargas antes de enviar.`;
+      return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    function canNativeShareFile(file){
+      return !!(navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
+    }
+
+    async function openEmailFallback(filename=''){
+      const msg = buildShareSummary(filename);
+      await copySummaryToClipboard(msg);
+      const url = buildMailtoUrl(msg, filename);
+      const opened = window.open(url, '_blank');
+      if(!opened) window.location.href = url;
+      return true;
+    }
+
+    async function sendLastFileByEmail(fromExport=false){
+      if(!lastExportFile){ toast('Primero exporte un archivo.', 'error'); return false; }
+      const summary = buildShareSummary(lastExportFile.filename);
+      await copySummaryToClipboard(`Correo destino: ${getEmailTo()}\n\n${summary}`);
+      const file = new File([lastExportFile.blob], lastExportFile.filename, {type:lastExportFile.mime});
+
+      if(canNativeShareFile(file)){
+        try{
+          await navigator.share({
+            title:'Control de corte de cable',
+            text:`Correo destino sugerido: ${getEmailTo()}\n\n${summary}`,
+            files:[file]
+          });
+          showSharePanel(`<strong>Archivo listo para enviar.</strong><br>Seleccione Correo/Gmail/Outlook en el menú del dispositivo, use el correo <strong>${escapeHtml(getEmailTo())}</strong> y envíe el Excel adjunto.<div style="margin-top:10px"><button type="button" class="btn-green" onclick="openEmailFallback(lastExportFile.filename)">Abrir correo con resumen</button></div>`);
+          toast('Archivo compartido al menú del dispositivo.', 'ok');
+          return true;
+        }catch(e){
+          if(!fromExport) toast('Compartir cancelado o no disponible.', 'error');
+        }
+      }
+
+      showSharePanel(`<strong>Archivo descargado.</strong><br>No fue posible anexarlo automáticamente desde este equipo. Se abrirá el correo a <strong>${escapeHtml(getEmailTo())}</strong> con el resumen listo. Adjunte el Excel desde Descargas antes de enviar.<div style="margin-top:10px"><button type="button" class="btn-green" onclick="openEmailFallback(lastExportFile.filename)">Abrir correo</button></div>`,'error');
+      toast('Se abre el correo con resumen. Adjunte el Excel descargado.', 'error');
+      if(fromExport) await openEmailFallback(lastExportFile.filename);
+      return false;
+    }
+
+    function saveEmailConfig(){
+      const to = getEmailTo();
+      localStorage.setItem(EMAIL_TO_KEY, to);
+      toast('Correo guardado', 'ok');
+      showSharePanel(`<strong>Correo guardado.</strong><br>Los reportes se prepararán para: <strong>${escapeHtml(to)}</strong>.`);
+    }
+
+    function enhanceAdaptiveInputs(){
+      const targets = document.querySelectorAll('input[type="text"], input:not([type]), textarea');
+      targets.forEach(el=>{
+        const field = el.closest('.field');
+        if(!field) return;
+        if(el.tagName === 'TEXTAREA') el.classList.add('auto-grow');
+        const update = ()=>{
+          const valueLength = (el.value || '').length;
+          const overflow = el.scrollWidth > el.clientWidth + 8;
+          const shouldExpand = document.activeElement === el || valueLength > 38 || overflow;
+          field.classList.toggle('expanded', shouldExpand);
+          if(el.tagName === 'TEXTAREA'){
+            el.style.height = 'auto';
+            el.style.height = Math.min(Math.max(el.scrollHeight, 54), 240) + 'px';
+          }
+        };
+        el.addEventListener('input', update);
+        el.addEventListener('focus', update);
+        el.addEventListener('blur', ()=>setTimeout(update, 80));
+        update();
+      });
+    }
+
+    function setView(view){
+      document.body.dataset.view=view;
+      document.querySelectorAll('[data-view-btn]').forEach(b=>b.classList.toggle('active-view', b.dataset.viewBtn===view));
+      localStorage.setItem('control_corte_view', view);
+      beep('click');
+    }
+
+    document.addEventListener('click', (e)=>{ if(e.target.matches('button')) beep('click'); });
+    document.querySelectorAll('[data-view-btn]').forEach(btn=>btn.addEventListener('click', ()=>setView(btn.dataset.viewBtn)));
+    document.querySelectorAll('[data-export]').forEach(btn=>btn.addEventListener('click', ()=>exportRecords(btn.dataset.export)));
+    $('cutForm').addEventListener('submit', saveRecord);
+    $('btnClearForm').addEventListener('click', ()=>clearForm(true));
+    $('btnToday').addEventListener('click', ()=>{const n=nowParts(); $('fechaSolicitud').value=n.date; $('horaSolicitud').value=n.time; $('fechaCorte').value=n.date; franjaManual=false; autoFranja(true); updateStatusPanel(); toast('Fecha y hora actualizadas', 'ok');});
+    $('btnRefresh').addEventListener('click', ()=>{renderAll(); toast('Vista actualizada', 'ok');});
+    $('btnSound').addEventListener('click', ()=>{soundEnabled=!soundEnabled; $('btnSound').textContent = 'Sonido: ' + (soundEnabled?'ON':'OFF'); toast(soundEnabled?'Sonido activado':'Sonido desactivado','click')});
+    $('btnEmail').addEventListener('click', sendLastFileByEmail);
+    $('btnSaveEmailConfig').addEventListener('click', saveEmailConfig);
+    $('btnOpenMail').addEventListener('click', ()=>openEmailFallback(lastExportFile?.filename || 'control_corte_cable.xlsx'));
+    $('btnPrint').addEventListener('click', ()=>window.print());
+    $('btnDeleteAll').addEventListener('click', ()=>{ if(confirm('¿Borrar todos los registros guardados en este navegador?')){records=[]; saveRecords(); renderAll(); toast('Registros borrados', 'error');} });
+    $('searchInput').addEventListener('input', renderTable);
+    $('filterStatus').addEventListener('change', renderTable);
+    document.querySelectorAll('[data-segment="franjaAtencion"] .seg-option').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        setSegmentValue('franjaAtencion', btn.dataset.value, true);
+        toast('Franja seleccionada: ' + franjaLabel(btn.dataset.value), 'click');
+      });
+    });
+    $('btnAutoFranja').addEventListener('click', ()=>{franjaManual=false; autoFranja(true); toast('Franja calculada automáticamente', 'ok');});
+    ['metrosSolicitados','disponibleAntes','horaSolicitud','autorizadoMenor50','autorizadoPor','motivoAutorizacion','corteUniforme','tramoRotulado','evidenciaRegistro','cumpleTiempo','novedad','pedido','referencia','carreteLote'].forEach(id=>$(id).addEventListener('input', calcRemanent));
+    ['autorizadoMenor50','autorizadoPor','cumpleTiempo','novedad'].forEach(id=>$(id).addEventListener('change', calcRemanent));
+
+    setCurrentDateTime();
+    if($('emailTo')) $('emailTo').value = localStorage.getItem(EMAIL_TO_KEY) || DEFAULT_EMAIL_TO;
+    setSegmentValue('franjaAtencion', val('franjaAtencion') || 'MISMO_DIA_TARDE', false);
+    enhanceAdaptiveInputs();
+    setView(localStorage.getItem('control_corte_view') || 'auto');
+    calcRemanent();
+    renderAll();
+  </script>
+</body>
+</html>
