@@ -16,3 +16,6 @@ VERSIÓN 3.3:
 - Solo OPERARIO registra cortes.
 - LÍDER LOGÍSTICO y GERENCIA ven tablero, aprobaciones y usuarios según rol.
 - Firestore bloquea creación de cortes para roles administrativos.
+
+
+VERSIÓN 3.5: formulario de operario simplificado. Las solicitudes con sobrante igual o menor a 50 m quedan bloqueadas hasta aprobación.
