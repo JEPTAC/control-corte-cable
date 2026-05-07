@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function bootstrapAdmin() { return signedIn() && request.auth.token.email == "j.perez@ei.com.co"; }
+    function userProfile() { return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data; }
+    function isGerencia() { return bootstrapAdmin() || (signedIn() && userProfile().rol == "GERENCIA" && userProfile().activo == true); }
+    function isLider() { return signedIn() && userProfile().rol == "LIDER_LOGISTICO" && userProfile().activo == true; }
+
+    match /usuarios/{uid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow update, delete: if isGerencia();
+    }
+
+    match /cortes_cable/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if (isLider() && resource.data.APROBACION_TIPO == "VALIDACION_LIDER_50")
+        || (isGerencia() && resource.data.APROBACION_TIPO == "AUTORIZACION_GERENCIA_MENOR_50")
+        || isGerencia();
+      allow delete: if isGerencia() || isLider();
+    }
+  }
+}

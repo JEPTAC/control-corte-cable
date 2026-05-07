@@ -1,0 +1,12 @@
+Para conectar Firebase:
+
+1. En Firebase crea un proyecto en plan Spark.
+2. Activa Authentication > Sign-in method > Email/Password.
+3. Crea Cloud Firestore.
+4. En Rules pega el contenido de firestore.rules.
+5. En index.html busca FIREBASE_CONFIG y reemplaza PEGAR_API_KEY, PEGAR_AUTH_DOMAIN, PEGAR_PROJECT_ID, PEGAR_STORAGE_BUCKET, PEGAR_MESSAGING_SENDER_ID y PEGAR_APP_ID con la configuración Web de Firebase.
+6. Sube index.html, manifest.json, service-worker.js, icon-192.png e icon-512.png a GitHub Pages.
+7. Crea el primer usuario con el correo j.perez@ei.com.co para que quede como GERENCIA.
+
+
+Versión 3.1: aprobaciones por rol y eliminación limitada a Líder Logístico o Gerencia.
