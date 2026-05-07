@@ -1,21 +1,12 @@
-CONTROL DE CORTE DE CABLE - V3.2
+CONTROL DE CORTE DE CABLE - V3.6
 
-Suba todos estos archivos sueltos a la raíz del repositorio de GitHub Pages.
+Esta versión bloquea el corte cuando el sobrante requiere aprobación.
 
-Cambios principales:
-- La app exige iniciar sesión para registrar cortes.
-- El responsable del corte se toma automáticamente del usuario activo.
-- El auxiliar solo diligencia el responsable de chequeo y los datos del corte.
-- Gerencia puede habilitar usuarios desde la app.
-- Los roles se controlan por Firestore: OPERARIO, LIDER_LOGISTICO, GERENCIA.
+Flujo operativo:
+1. Operario registra cable, metros a cortar, carrete y sobrante.
+2. Si el sobrante queda =50 m o <50 m, usa ENVIAR APROBACIÓN.
+3. El corte queda bloqueado hasta que Líder Logístico o Gerencia apruebe.
+4. Al aprobarse, el operario puede continuar el corte y registrar hora de inicio y hora final.
+5. El Excel conserva las columnas separadas y la trazabilidad del usuario.
 
-Después de subir el ZIP descomprimido, copie el contenido de firestore.rules en Firebase > Firestore Database > Reglas y publique.
-
-
-VERSIÓN 3.3:
-- Solo OPERARIO registra cortes.
-- LÍDER LOGÍSTICO y GERENCIA ven tablero, aprobaciones y usuarios según rol.
-- Firestore bloquea creación de cortes para roles administrativos.
-
-
-VERSIÓN 3.5: formulario de operario simplificado. Las solicitudes con sobrante igual o menor a 50 m quedan bloqueadas hasta aprobación.
+Después de subir estos archivos a GitHub Pages, copie el contenido de firestore.rules en Firebase > Firestore Database > Reglas y publique.

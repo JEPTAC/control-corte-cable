@@ -602,6 +602,8 @@
     .auth-row{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
     .auth-row .field{grid-column:span 4}
     .auth-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    .notice-pulse{animation:noticePulse 1.2s ease-in-out 3}
+    @keyframes noticePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03); box-shadow:0 0 0 8px rgba(243,164,0,.14)}}
     .user-chip{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; background:#f1f5f9; color:var(--navy); font-weight:900; font-size:.82rem; border:1px solid var(--line)}
     .approval-list,.users-list{display:grid; gap:10px}
     .approval-item,.user-item{border:1px solid var(--line); border-radius:16px; padding:12px; background:#fff; box-shadow:0 6px 18px rgba(11,42,91,.06)}
@@ -659,6 +661,19 @@
     .approval-gate strong{color:#7c2d12}
     .operator-header-text{font-size:.92rem;color:var(--muted);line-height:1.45;margin-top:4px}
     @media(max-width:820px){.quick-steps{grid-template-columns:1fr}.operator-simple .form-grid{gap:11px}.operator-simple .primary-input input{font-size:1rem}}
+
+
+    .cut-measure{border-color:#bfdbfe;background:linear-gradient(180deg,#ffffff,#eff6ff)}
+    .cut-measure[disabled]{opacity:.64; filter:grayscale(.1)}
+    .cut-lock-note{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;border:1px solid var(--line);background:#f8fafc;border-radius:16px;padding:12px;color:var(--navy);font-weight:800;line-height:1.42}
+    .cut-lock-note .icon{width:34px;height:34px;flex:0 0 auto;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--navy),var(--teal));color:#fff}
+    .time-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .operator-approved-panel{margin-top:14px;border:1px solid #bfdbfe;border-radius:18px;padding:14px;background:linear-gradient(180deg,#fff,#eff6ff)}
+    .operator-approved-panel h3{margin:0 0 10px;color:var(--navy);font-size:1rem;text-transform:uppercase;letter-spacing:.02em}
+    .operator-approved-list{display:grid;gap:10px}
+    .operator-approved-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff;box-shadow:0 6px 18px rgba(11,42,91,.06)}
+    .operator-approved-item strong{color:var(--navy)}
+    .action-hint{font-size:.86rem;color:var(--muted);line-height:1.35;margin-top:6px}
 
   </style>
 </head>
@@ -722,6 +737,8 @@
               <span class="user-chip">&gt;50 m: permitido</span>
               <span class="user-chip">=50 m: líder</span>
               <span class="user-chip">&lt;50 m: gerencia</span>
+              <button type="button" class="btn-primary btn-small" id="btnEnableNotifications">Activar avisos</button>
+              <span class="user-chip" id="notifyStatus">Avisos pendientes</span>
             </div>
           </div>
         </div>
@@ -768,7 +785,7 @@
             <div class="quick-steps" aria-label="Pasos de registro">
               <div class="quick-step"><span>1</span><div>Identifique cable y metros a cortar.</div></div>
               <div class="quick-step"><span>2</span><div>Registre carrete y metraje disponible.</div></div>
-              <div class="quick-step"><span>3</span><div>Verifique sobrante antes de cortar.</div></div>
+              <div class="quick-step"><span>3</span><div>Si requiere aprobación, envíela y espere autorización.</div></div>
             </div>
 
             <fieldset>
@@ -795,11 +812,11 @@
             </fieldset>
 
             <fieldset>
-              <legend>Chequeo y observación</legend>
+              <legend>Chequeo y aprobación</legend>
               <div class="form-grid">
-                <div class="field col-6 primary-input"><label for="responsableChequeo">Auxiliar de chequeo / recolección *</label><input id="responsableChequeo" required placeholder="Nombre del auxiliar que chequeó" /></div>
+                <div class="field col-6 primary-input"><label for="responsableChequeo">Auxiliar de chequeo / recolección</label><input id="responsableChequeo" placeholder="Nombre del auxiliar que chequeó" /></div>
                 <div class="field col-6 session-filled"><label for="responsableCorte">Responsable del corte</label><input id="responsableCorte" readonly placeholder="Se toma del usuario activo" /><div class="adaptive-hint" id="responsableCorteInfo">Se completa automáticamente con el usuario activo.</div></div>
-                <div class="field col-12 primary-input"><label for="motivoAutorizacion">Observación / razón si requiere aprobación</label><textarea id="motivoAutorizacion" placeholder="Solo cuando el sobrante sea igual o menor a 50 m, indique la razón"></textarea></div>
+                <div class="field col-12 primary-input"><label for="motivoAutorizacion">Razón / observación de aprobación</label><textarea id="motivoAutorizacion" placeholder="Solo cuando el sobrante sea igual o menor a 50 m, indique la razón"></textarea></div>
                 <div class="col-12 status-panel" id="statusPanel">
                   <div class="status-label">Estado calculado</div>
                   <div class="status-value" id="estadoCalculado">Pendiente</div>
@@ -808,7 +825,32 @@
               </div>
             </fieldset>
 
+            <fieldset id="cutMeasureSection" class="cut-measure" disabled>
+              <legend>Medición del corte</legend>
+              <div class="cut-lock-note" id="cutLockNote"><span class="icon">🔒</span><div>El corte se desbloquea cuando no requiere aprobación o cuando la solicitud queda aprobada.</div></div>
+              <div class="form-grid">
+                <div class="field col-3"><label for="fechaCorte">Fecha corte</label><input type="date" id="fechaCorte" readonly /></div>
+                <div class="field col-3"><label for="horaInicio">Hora inicio</label><input type="time" id="horaInicio" readonly /></div>
+                <div class="field col-3"><label for="horaFin">Hora final</label><input type="time" id="horaFin" readonly /></div>
+                <div class="field col-3 readonly-result"><label for="duracionCorte">Duración</label><input id="duracionCorte" class="readonly" readonly placeholder="--" /></div>
+                <div class="field col-3"><label for="metrajeFinal">Metraje final</label><input type="number" min="0" step="0.01" id="metrajeFinal" placeholder="0" /></div>
+                <div class="field col-3"><label for="remanenteReal">Sobrante real</label><input type="number" min="0" step="0.01" id="remanenteReal" placeholder="0" /></div>
+                <div class="field col-6"><label>Acciones de tiempo</label><div class="time-actions"><button type="button" class="btn-green" id="btnStartCut">Iniciar corte</button><button type="button" class="btn-orange" id="btnEndCut">Finalizar corte</button></div><div class="action-hint">Use estos botones para medir la duración real del corte.</div></div>
+                <div class="col-12 checks">
+                  <label class="check-card"><input type="checkbox" id="corteUniforme" checked /> Corte uniforme</label>
+                  <label class="check-card"><input type="checkbox" id="tramoRotulado" checked /> Tramo rotulado</label>
+                  <label class="check-card"><input type="checkbox" id="evidenciaRegistro" checked /> Evidencia/registro realizado</label>
+                </div>
+              </div>
+            </fieldset>
+
             <div class="system-hidden" aria-hidden="true">
+              <input type="hidden" id="registroId" />
+              <input type="hidden" id="consecutivoActual" />
+              <input type="hidden" id="aprobacionTipoActual" />
+              <input type="hidden" id="aprobacionEstadoActual" />
+              <input type="hidden" id="aprobadoPorActual" />
+              <input type="hidden" id="fechaAprobacionActual" />
               <input type="date" id="fechaSolicitud" />
               <input type="time" id="horaSolicitud" />
               <input id="clienteProceso" value="Logística" />
@@ -818,15 +860,7 @@
               <input id="ubicacionProducto" />
               <input id="autorizadoMenor50" value="NO" />
               <input id="autorizadoPor" />
-              <input type="date" id="fechaCorte" />
-              <input type="time" id="horaInicio" />
-              <input type="time" id="horaFin" />
-              <input type="number" min="0" step="0.01" id="metrajeFinal" />
-              <input type="number" min="0" step="0.01" id="remanenteReal" />
               <input id="evidenciaTexto" value="Registro digital" />
-              <input type="checkbox" id="corteUniforme" checked />
-              <input type="checkbox" id="tramoRotulado" checked />
-              <input type="checkbox" id="evidenciaRegistro" checked />
               <input type="hidden" id="franjaAtencion" value="MISMO_DIA_TARDE" />
               <select id="cumpleTiempo"><option value="SI">Sí</option><option value="NO">No</option><option value="PENDIENTE">Pendiente</option></select>
               <select id="novedad"><option value="SIN_NOVEDAD">Sin novedad</option><option value="RETRABAJO_NO_CONFORME">Retrabajo / no conforme</option><option value="SUSPENDIDO">Suspendido</option><option value="OTRA">Otra</option></select>
@@ -835,10 +869,15 @@
             </div>
 
             <div class="form-actions">
-              <button class="btn-primary" type="submit" id="btnSaveRecord">Guardar registro</button>
+              <button class="btn-orange" type="button" id="btnSendApproval" hidden>Enviar aprobación</button>
+              <button class="btn-primary" type="submit" id="btnSaveRecord">Guardar corte</button>
               <button type="button" id="btnClearForm">Limpiar</button>
             </div>
           </form>
+          <div class="operator-approved-panel" id="operatorApprovedPanel" hidden>
+            <h3>Cortes aprobados para finalizar</h3>
+            <div class="operator-approved-list" id="operatorApprovedList"></div>
+          </div>
         </div>
       </section>
 
@@ -937,7 +976,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const VERSION = '3.5.0-OPERARIO-SIMPLE';
+    const VERSION = '3.7.0-AVISOS-APROBACION';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -945,6 +984,7 @@
     let records = loadRecords();
     let lastExportFile = null;
     let franjaManual = false;
+    let submitIntent = 'record';
 
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyAE1v79wks-WHFqPXJBXni8f3WhnEX__ww",
@@ -963,6 +1003,10 @@
     let cloudUsersUnsub = null;
     let cloudPreUsersUnsub = null;
     let fb = {};
+    const NOTIFY_KEY = 'control_corte_notify_enabled';
+    let approvalNotificationsEnabled = localStorage.getItem(NOTIFY_KEY) === '1';
+    let approvalNotificationInitialized = false;
+    let knownApprovalNoticeKeys = new Set();
 
     const columns = [
       ['CONSECUTIVO','Consecutivo'],
@@ -1067,10 +1111,7 @@
       const rem = hasValues ? +(disponible - solicitado).toFixed(2) : 0;
       $('remanenteProyectado').value = hasValues ? normalizeDecimal(rem) : '';
       if($('remanenteReal')) $('remanenteReal').value = hasValues ? normalizeDecimal(rem) : '';
-      if($('metrajeFinal')) $('metrajeFinal').value = solicitado > 0 && rem > 50 ? normalizeDecimal(solicitado) : '';
-      if($('fechaCorte') && !$('fechaCorte').value && rem > 50) $('fechaCorte').value = nowParts().date;
-      if($('horaInicio') && !$('horaInicio').value && rem > 50) $('horaInicio').value = nowParts().time;
-      if($('horaFin') && !$('horaFin').value && rem > 50) $('horaFin').value = nowParts().time;
+      if($('metrajeFinal') && cutUnlocked()) $('metrajeFinal').value = solicitado > 0 ? normalizeDecimal(solicitado) : '';
       let restriccion = '';
       if(hasValues){
         if(rem > 50) restriccion = '>50 m';
@@ -1097,7 +1138,100 @@
         if(gateText) gateText.innerHTML = '<strong>Requiere aprobación.</strong><br>Guarde la solicitud y no continúe el corte hasta recibir aprobación.';
       }
       autoFranja();
+      updateCutWorkflow();
       updateStatusPanel();
+    }
+
+
+    function selectedRemanent(){
+      const raw = $('remanenteProyectado') ? $('remanenteProyectado').value : '';
+      const n = Number(String(raw).replace(',','.'));
+      return Number.isFinite(n) ? n : NaN;
+    }
+    function approvalRequiredNow(){
+      const rem = selectedRemanent();
+      return Number.isFinite(rem) && rem <= 50;
+    }
+    function currentFormApproved(){
+      return val('aprobacionEstadoActual') === 'APROBADO';
+    }
+    function cutUnlocked(){
+      const rem = selectedRemanent();
+      return Number.isFinite(rem) && (rem > 50 || currentFormApproved());
+    }
+    function setFieldsetDisabled(fieldset, disabled){
+      if(!fieldset) return;
+      fieldset.disabled = !!disabled;
+      fieldset.classList.toggle('disabled-section', !!disabled);
+    }
+    function updateCutWorkflow(){
+      const rem = selectedRemanent();
+      const hasRem = Number.isFinite(rem);
+      const requires = hasRem && rem <= 50;
+      const approved = currentFormApproved();
+      const unlocked = hasRem && (rem > 50 || approved);
+      const measure = $('cutMeasureSection');
+      const lock = $('cutLockNote');
+      const sendBtn = $('btnSendApproval');
+      const saveBtn = $('btnSaveRecord');
+      setFieldsetDisabled(measure, !unlocked);
+      if(sendBtn) sendBtn.hidden = !(requires && !approved);
+      if(saveBtn){
+        saveBtn.disabled = requires && !approved;
+        saveBtn.textContent = approved ? 'Guardar corte aprobado' : 'Guardar corte';
+      }
+      if(lock){
+        if(!hasRem) lock.innerHTML = '<span class="icon">🔒</span><div>Ingrese metros y carrete para habilitar el corte.</div>';
+        else if(requires && !approved) lock.innerHTML = '<span class="icon">⏳</span><div><strong>Corte bloqueado.</strong><br>Envíe la aprobación y espere respuesta antes de iniciar el corte.</div>';
+        else if(approved) lock.innerHTML = '<span class="icon">✅</span><div><strong>Aprobación recibida.</strong><br>Ya puede iniciar el corte y registrar las horas.</div>';
+        else lock.innerHTML = '<span class="icon">✅</span><div><strong>Corte habilitado.</strong><br>Registre hora de inicio, hora final y validación del tramo.</div>';
+      }
+      if(!unlocked && requires && !approved){
+        if($('fechaCorte')) $('fechaCorte').value = '';
+        if($('horaInicio')) $('horaInicio').value = '';
+        if($('horaFin')) $('horaFin').value = '';
+        if($('metrajeFinal')) $('metrajeFinal').value = '';
+        if($('duracionCorte')) $('duracionCorte').value = '--';
+      }
+      if(unlocked && $('metrajeFinal') && !$('metrajeFinal').value && val('metrosSolicitados')) $('metrajeFinal').value = val('metrosSolicitados');
+      if(unlocked && $('remanenteReal') && !$('remanenteReal').value && $('remanenteProyectado')) $('remanenteReal').value = $('remanenteProyectado').value;
+      updateDuration();
+    }
+    function updateDuration(){
+      if(!$('duracionCorte')) return;
+      const ini = val('horaInicio'); const fin = val('horaFin');
+      if(!ini || !fin){ $('duracionCorte').value='--'; return; }
+      const [h1,m1]=ini.split(':').map(Number); const [h2,m2]=fin.split(':').map(Number);
+      if(!Number.isFinite(h1)||!Number.isFinite(h2)){ $('duracionCorte').value='--'; return; }
+      let mins=(h2*60+m2)-(h1*60+m1); if(mins<0) mins+=24*60;
+      const h=Math.floor(mins/60), m=mins%60;
+      $('duracionCorte').value = h ? `${h} h ${m} min` : `${m} min`;
+    }
+    function startCutTime(){
+      if(!cutUnlocked()) return toast('El corte aún está bloqueado por aprobación.', 'error');
+      const n=nowParts();
+      $('fechaCorte').value = n.date;
+      $('horaInicio').value = n.time;
+      $('horaFin').value = '';
+      $('metrajeFinal').value = val('metrosSolicitados');
+      $('remanenteReal').value = $('remanenteProyectado').value;
+      updateDuration();
+      toast('Hora de inicio registrada', 'ok');
+    }
+    function endCutTime(){
+      if(!cutUnlocked()) return toast('El corte aún está bloqueado por aprobación.', 'error');
+      if(!val('horaInicio')) startCutTime();
+      const n=nowParts();
+      $('horaFin').value = n.time;
+      if(!$('fechaCorte').value) $('fechaCorte').value = n.date;
+      $('metrajeFinal').value = val('metrosSolicitados');
+      $('remanenteReal').value = $('remanenteProyectado').value;
+      $('corteUniforme').checked = true;
+      $('tramoRotulado').checked = true;
+      $('evidenciaRegistro').checked = true;
+      updateDuration();
+      updateStatusPanel();
+      toast('Hora final registrada', 'ok');
     }
 
     function setSegmentValue(id, value, manual=false){
@@ -1133,8 +1267,9 @@
       const franja = val('franjaAtencion');
       const cumpleTiempo = val('cumpleTiempo');
       if(!val('referencia') || !val('carreteLote') || !val('metrosSolicitados') || !val('disponibleAntes')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete cable, metros a cortar y carrete para calcular el estado.', cls:'status-warn'};
-      if(Number.isFinite(rem) && rem < 50) return {estado:'PENDIENTE_GERENCIA', label:'Pendiente gerencia', detail:'Remanente menor a 50 m: requiere autorización de Gerencia antes del corte.', cls:'status-warn'};
-      if(Number.isFinite(rem) && rem === 50) return {estado:'PENDIENTE_LIDER', label:'Pendiente líder', detail:'Remanente igual a 50 m: requiere validación del Líder Logístico.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rem < 50 && !currentFormApproved()) return {estado:'PENDIENTE_GERENCIA', label:'Pendiente gerencia', detail:'Remanente menor a 50 m: requiere autorización de Gerencia antes del corte.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rem === 50 && !currentFormApproved()) return {estado:'PENDIENTE_LIDER', label:'Pendiente líder', detail:'Remanente igual a 50 m: requiere validación del Líder Logístico.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rem <= 50 && currentFormApproved() && (!val('horaInicio') || !val('horaFin'))) return {estado:'APROBADO_PENDIENTE_CORTE', label:'Aprobado, pendiente corte', detail:'La aprobación fue recibida. Registre hora de inicio y finalización.', cls:'status-warn'};
       if(novedad === 'RETRABAJO_NO_CONFORME' || !qualityOk) return {estado:'NO_CONFORME', label:'No conforme', detail:'Existe retrabajo/no conformidad o falta un control de calidad.', cls:'status-stop'};
       if(franja === 'SUSPENDIDO_NOVEDAD_AUTORIZACION') return {estado:'SUSPENDIDO', label:'Suspendido', detail:'La solicitud quedó suspendida por novedad o autorización pendiente.', cls:'status-stop'};
       if(cumpleTiempo === 'NO') return {estado:'REVISAR', label:'Revisar tiempo', detail:'El registro indica incumplimiento de la franja de atención.', cls:'status-warn'};
@@ -1163,8 +1298,8 @@
         cumpleRemanente = rem >= 50 ? 'SI' : (val('autorizadoMenor50') === 'SI' ? 'AUTORIZADO' : 'NO');
       }
       return {
-        id: crypto.randomUUID ? crypto.randomUUID() : 'REG-' + Date.now(),
-        CONSECUTIVO: nextConsecutive(),
+        id: val('registroId') || (crypto.randomUUID ? crypto.randomUUID() : 'REG-' + Date.now()),
+        CONSECUTIVO: val('consecutivoActual') || nextConsecutive(),
         FECHA_SOLICITUD: val('fechaSolicitud'),
         HORA_SOLICITUD: val('horaSolicitud'),
         PEDIDO_REQUERIMIENTO: cleanText(val('pedido')),
@@ -1203,6 +1338,10 @@
         CUMPLE_REMANENTE: cumpleRemanente,
         CUMPLE_CALIDAD: qualityOk ? 'SI' : 'NO',
         ESTADO_CORTE: status.estado,
+        APROBACION_TIPO: val('aprobacionTipoActual'),
+        APROBACION_ESTADO: val('aprobacionEstadoActual'),
+        APROBADO_POR: val('aprobadoPorActual'),
+        FECHA_APROBACION: val('fechaAprobacionActual'),
         FECHA_REGISTRO_SISTEMA: n.date,
         HORA_REGISTRO_SISTEMA: n.time
       };
@@ -1225,14 +1364,13 @@
       if(!$('evidenciaTexto').value) $('evidenciaTexto').value = 'Registro digital';
       if($('observacion')) $('observacion').value = val('motivoAutorizacion');
       const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
-      if(Number.isFinite(rem) && rem > 50){
+      if(cutUnlocked()){
         if(!$('fechaCorte').value) $('fechaCorte').value = n.date;
-        if(!$('horaInicio').value) $('horaInicio').value = n.time;
-        if(!$('horaFin').value) $('horaFin').value = n.time;
         if(!$('metrajeFinal').value) $('metrajeFinal').value = val('metrosSolicitados');
         if(!$('remanenteReal').value) $('remanenteReal').value = $('remanenteProyectado').value;
+        $('novedad').value = 'SIN_NOVEDAD';
       }
-      if(Number.isFinite(rem) && rem <= 50){
+      if(Number.isFinite(rem) && rem <= 50 && !currentFormApproved()){
         $('metrajeFinal').value = '';
         $('fechaCorte').value = '';
         $('horaInicio').value = '';
@@ -1240,9 +1378,6 @@
         $('cumpleTiempo').value = 'PENDIENTE';
         $('novedad').value = 'SUSPENDIDO';
       }
-      $('corteUniforme').checked = true;
-      $('tramoRotulado').checked = true;
-      $('evidenciaRegistro').checked = true;
     }
 
     function validateBeforeSave(){
@@ -1253,8 +1388,11 @@
       applyQuickDefaultsBeforeSave();
       if(!operatorName()){ toast('No se identificó el responsable del corte. Cierre sesión e ingrese nuevamente.', 'error'); return false; }
       const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
-      const required = ['referencia','metrosSolicitados','carreteLote','disponibleAntes','responsableChequeo'];
-      if(Number.isFinite(rem) && rem <= 50){ required.push('motivoAutorizacion'); }
+      const approvalNeeded = Number.isFinite(rem) && rem <= 50;
+      const approved = currentFormApproved();
+      const required = ['referencia','metrosSolicitados','carreteLote','disponibleAntes'];
+      if(submitIntent === 'approval') required.push('motivoAutorizacion');
+      if(submitIntent !== 'approval') required.push('responsableChequeo','horaInicio','horaFin','metrajeFinal','remanenteReal');
       for(const id of required){
         if(!val(id)){
           const label = document.querySelector(`label[for="${id}"]`)?.textContent?.replace('*','') || id;
@@ -1263,18 +1401,22 @@
       }
       if(num('metrosSolicitados') <= 0){ toast('Los metros a cortar deben ser mayores a cero.', 'error'); return false; }
       if(num('metrosSolicitados') > num('disponibleAntes')){ toast('Los metros a cortar no pueden superar el metraje disponible.', 'error'); return false; }
+      if(approvalNeeded && submitIntent !== 'approval' && !approved){ toast('Este corte requiere aprobación. Use Enviar aprobación y espere respuesta.', 'error'); return false; }
+      if(!approvalNeeded && submitIntent === 'approval'){ toast('Este corte no requiere aprobación. Puede registrar el corte.', 'click'); return false; }
       return true;
     }
 
     function clearForm(full=false){
       $('cutForm').reset();
+      submitIntent='record';
+      ['registroId','consecutivoActual','aprobacionTipoActual','aprobacionEstadoActual','aprobadoPorActual','fechaAprobacionActual','duracionCorte'].forEach(id=>{ if($(id)) $(id).value=''; });
       franjaManual=false;
       document.body.dataset.session = currentUser ? 'in' : 'out';
     setCurrentDateTime();
       $('corteUniforme').checked=true; $('tramoRotulado').checked=true; $('evidenciaRegistro').checked=true;
       setSegmentValue('franjaAtencion', 'MISMO_DIA_TARDE', false);
       syncOperatorFields();
-      calcRemanent(); updateStatusPanel();
+      calcRemanent(); updateCutWorkflow(); updateStatusPanel();
       if(full) toast('Formulario limpio', 'click');
     }
 
@@ -1286,17 +1428,19 @@
       calcRemanent();
       if(!validateBeforeSave()) return;
       const record = applyApprovalWorkflow(collectRecord());
+      records = records.filter(x=>x.id !== record.id);
       records.unshift(record);
       saveRecords();
       renderAll();
       renderApprovalPanel();
       try{ await saveRecordToCloud(record); }catch(_e){}
       clearForm(false);
-      toast(record.APROBACION_ESTADO === 'PENDIENTE' ? 'Solicitud enviada. No continuar hasta aprobación.' : 'Registro guardado correctamente', 'ok');
+      toast(record.APROBACION_ESTADO === 'PENDIENTE' ? 'Solicitud de aprobación enviada. No continuar hasta aprobación.' : 'Corte guardado correctamente', 'ok');
+      submitIntent='record';
     }
 
     function statusPill(status){
-      const map={CONFORME:['pill-ok','Conforme'], AUTORIZADO:['pill-auth','Autorizado'], SUSPENDIDO:['pill-stop','Suspendido'], NO_CONFORME:['pill-stop','No conforme'], REVISAR:['pill-warn','Revisar'], PENDIENTE:['pill-blue','Pendiente'], PENDIENTE_LIDER:['pill-warn','Pendiente líder'], PENDIENTE_GERENCIA:['pill-warn','Pendiente gerencia'], RECHAZADO:['pill-stop','Rechazado']};
+      const map={CONFORME:['pill-ok','Conforme'], AUTORIZADO:['pill-auth','Autorizado'], SUSPENDIDO:['pill-stop','Suspendido'], NO_CONFORME:['pill-stop','No conforme'], REVISAR:['pill-warn','Revisar'], PENDIENTE:['pill-blue','Pendiente'], APROBADO_PENDIENTE_CORTE:['pill-auth','Aprobado pend. corte'], PENDIENTE_LIDER:['pill-warn','Pendiente líder'], PENDIENTE_GERENCIA:['pill-warn','Pendiente gerencia'], RECHAZADO:['pill-stop','Rechazado']};
       const [cls,label]=map[status] || ['pill-blue',status];
       return `<span class="pill ${cls}">${label}</span>`;
     }
@@ -1310,6 +1454,20 @@
         const qOk = !q || [r.PEDIDO_REQUERIMIENTO,r.CLIENTE_PROCESO,r.REFERENCIA_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO].join(' ').toLowerCase().includes(q);
         return statusOk && qOk;
       });
+    }
+
+
+    function isOwnRecord(r){ return currentUser && r.SOLICITANTE_UID === currentUser.uid; }
+    function canContinueRecord(r){
+      return isRole('OPERARIO') && isOwnRecord(r) && r.APROBACION_ESTADO === 'APROBADO' && !r.HORA_FIN;
+    }
+    function rowActionsForRecord(r){
+      const actions=[];
+      if(canContinueRecord(r)) actions.push(`<button type="button" class="btn-small btn-green" onclick="continueRecord('${r.id}')">Continuar corte</button>`);
+      else if(isRole('OPERARIO') && isOwnRecord(r) && r.APROBACION_ESTADO === 'PENDIENTE') actions.push('<span class="pill pill-warn">Esperando aprobación</span>');
+      else if(isRole('OPERARIO') && isOwnRecord(r) && r.APROBACION_ESTADO === 'RECHAZADO') actions.push('<span class="pill pill-stop">Rechazado</span>');
+      if(canDeleteRecords()) actions.push(`<button type="button" class="btn-small btn-red" onclick="deleteRecord('${r.id}')">Eliminar</button>`);
+      return actions.join(' ') || '<span class="pill pill-blue">Registrado</span>';
     }
 
     function renderTable(){
@@ -1327,13 +1485,13 @@
           <td>${escapeHtml(r.RESPONSABLE_CORTE)}<br><span style="color:#667085">Chequeo: ${escapeHtml(r.RESPONSABLE_CHEQUEO||'N/A')}</span></td>
           <td>${escapeHtml(franjaLabel(r.FRANJA_ATENCION))}<br><span style="color:#667085">Tiempo: ${escapeHtml(r.CUMPLE_TIEMPO)}</span></td>
           <td>${statusPill(r.ESTADO_CORTE)}<br><span style="color:#667085">Calidad: ${escapeHtml(r.CUMPLE_CALIDAD)}</span>${r.APROBACION_ESTADO==='PENDIENTE'?'<br><span class="pill pill-warn">Aprobación pendiente</span>':''}</td>
-          <td class="row-actions"><button type="button" class="btn-small" onclick="editRecord('${r.id}')">Editar</button>${canDeleteRecords()?`<button type="button" class="btn-small btn-red" onclick="deleteRecord('${r.id}')">Eliminar</button>`:''}</td>
+          <td class="row-actions">${rowActionsForRecord(r)}</td>
         </tr>`).join('');
       $('tableContainer').innerHTML = `<div class="table-scroll"><table><thead><tr><th>Consecutivo</th><th>Pedido / Cliente</th><th>Cable</th><th>Carrete</th><th>Restricción</th><th>Corte</th><th>Responsable</th><th>Franja</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
 
     function countByStatus(){
-      const counts={CONFORME:0,AUTORIZADO:0,SUSPENDIDO:0,NO_CONFORME:0,REVISAR:0,PENDIENTE_LIDER:0,PENDIENTE_GERENCIA:0,RECHAZADO:0};
+      const counts={CONFORME:0,AUTORIZADO:0,APROBADO_PENDIENTE_CORTE:0,SUSPENDIDO:0,NO_CONFORME:0,REVISAR:0,PENDIENTE_LIDER:0,PENDIENTE_GERENCIA:0,RECHAZADO:0};
       records.forEach(r=>{counts[r.ESTADO_CORTE]=(counts[r.ESTADO_CORTE]||0)+1});
       return counts;
     }
@@ -1344,6 +1502,7 @@
       const conformes=counts.CONFORME || 0;
       const autorizados=counts.AUTORIZADO || 0;
       const pendientes=(counts.PENDIENTE_LIDER||0)+(counts.PENDIENTE_GERENCIA||0);
+      const aprobadosPendientes=counts.APROBADO_PENDIENTE_CORTE||0;
       const noConformes=(counts.NO_CONFORME||0)+(counts.SUSPENDIDO||0)+(counts.REVISAR||0)+(counts.RECHAZADO||0);
       const menor50=records.filter(r=>r.RESTRICCION_REMANENTE === '<50 m').length;
       const cumplimiento = total ? Math.round((conformes/total)*100) : 0;
@@ -1354,13 +1513,14 @@
         ['Conformes', conformes, 'good'],
         ['Autorizados <50 m', autorizados, 'warn'],
         ['Pendientes aprobación', pendientes, 'warn'],
+        ['Aprobados por finalizar', aprobadosPendientes, 'warn'],
         ['No conformes / suspendidos', noConformes, 'bad'],
         ['Cumplen tiempo', total ? Math.round((tiempoOk/total)*100)+'%' : '0%', 'blue']
       ].map(([label,value,cls])=>`<div class="kpi ${cls}"><div class="value">${value}</div><div class="label">${label}</div></div>`).join('');
       renderDonut(cumplimiento);
       renderBars(counts, total);
       $('legendStatus').innerHTML = [
-        ['#0f8f46','Conforme',conformes],['#f36b13','Autorizado',autorizados],['#f3a400','Pendientes aprobación',pendientes],['#c91523','No conformes / suspendidos',noConformes],['#f3a400','Remanentes <50 m',menor50]
+        ['#0f8f46','Conforme',conformes],['#f36b13','Autorizado',autorizados],['#2563eb','Aprobados por finalizar',aprobadosPendientes],['#f3a400','Pendientes aprobación',pendientes],['#c91523','No conformes / suspendidos',noConformes],['#f3a400','Remanentes <50 m',menor50]
       ].map(([c,l,v])=>`<div class="legend-item"><span class="dot" style="background:${c}"></span>${l}: <strong>${v}</strong></div>`).join('');
     }
 
@@ -1372,14 +1532,23 @@
     }
 
     function renderBars(counts,total){
-      const items=[['CONFORME','Conforme','fill-green'],['AUTORIZADO','Autorizado','fill-orange'],['PENDIENTE_LIDER','Pendiente líder','fill-amber'],['PENDIENTE_GERENCIA','Pendiente gerencia','fill-amber'],['REVISAR','Revisar','fill-amber'],['SUSPENDIDO','Suspendido','fill-red'],['NO_CONFORME','No conforme','fill-red'],['RECHAZADO','Rechazado','fill-red']];
+      const items=[['CONFORME','Conforme','fill-green'],['AUTORIZADO','Autorizado','fill-orange'],['PENDIENTE_LIDER','Pendiente líder','fill-amber'],['PENDIENTE_GERENCIA','Pendiente gerencia','fill-amber'],['APROBADO_PENDIENTE_CORTE','Aprobado pend. corte','fill-blue'],['REVISAR','Revisar','fill-amber'],['SUSPENDIDO','Suspendido','fill-red'],['NO_CONFORME','No conforme','fill-red'],['RECHAZADO','Rechazado','fill-red']];
       $('statusBars').innerHTML = items.map(([key,label,cls])=>{
         const value=counts[key]||0; const pct=total?Math.round((value/total)*100):0;
         return `<div class="bar-row"><span>${label}</span><div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div><strong>${value}</strong></div>`;
       }).join('');
     }
 
-    function renderAll(){renderDashboard(); renderTable();}
+    function renderOperatorApprovedList(){
+      const panel=$('operatorApprovedPanel'), listEl=$('operatorApprovedList');
+      if(!panel || !listEl) return;
+      const list = records.filter(r=>isRole('OPERARIO') && isOwnRecord(r) && r.APROBACION_ESTADO === 'APROBADO' && !r.HORA_FIN);
+      panel.hidden = !list.length;
+      if(!list.length){ listEl.innerHTML=''; return; }
+      listEl.innerHTML = list.map(r=>`<div class="operator-approved-item"><strong>${escapeHtml(r.CONSECUTIVO || '')} · ${escapeHtml(r.REFERENCIA_CABLE || '')}</strong><div class="approval-meta">Carrete ${escapeHtml(r.CARRETE_LOTE||'')} · Cortar ${escapeHtml(r.METROS_SOLICITADOS||'')} m · Sobrante ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Aprobado por: ${escapeHtml(r.APROBADO_POR || '')}</div><div class="approval-actions"><button type="button" class="btn-green" onclick="continueRecord('${r.id}')">Continuar corte</button></div></div>`).join('');
+    }
+
+    function renderAll(){renderDashboard(); renderTable(); renderOperatorApprovedList();}
 
     window.deleteRecord = async function(id){
       if(!canDeleteRecords()) return toast('Solo Líder Logístico o Gerencia pueden eliminar cortes.', 'error');
@@ -1393,15 +1562,25 @@
       toast('Registro eliminado', 'click');
     }
 
+    window.continueRecord = function(id){ return editRecord(id); }
     window.editRecord = function(id){
       const r=records.find(x=>x.id===id); if(!r) return;
-      $('fechaSolicitud').value=r.FECHA_SOLICITUD||''; $('horaSolicitud').value=r.HORA_SOLICITUD||''; $('pedido').value=r.PEDIDO_REQUERIMIENTO||''; $('clienteProceso').value=r.CLIENTE_PROCESO||'';
+      if(!isRole('OPERARIO') || !isOwnRecord(r)){ toast('Solo el operario solicitante puede continuar este corte.', 'error'); return; }
+      if(r.APROBACION_ESTADO === 'PENDIENTE'){ toast('Este corte sigue pendiente de aprobación.', 'error'); return; }
+      if(r.APROBACION_ESTADO === 'RECHAZADO'){ toast('Esta solicitud fue rechazada.', 'error'); return; }
+      $('registroId').value = r.id || '';
+      $('consecutivoActual').value = r.CONSECUTIVO || '';
+      $('aprobacionTipoActual').value = r.APROBACION_TIPO || '';
+      $('aprobacionEstadoActual').value = r.APROBACION_ESTADO || '';
+      $('aprobadoPorActual').value = r.APROBADO_POR || '';
+      $('fechaAprobacionActual').value = r.FECHA_APROBACION || '';
+      $('fechaSolicitud').value=r.FECHA_SOLICITUD||''; $('horaSolicitud').value=r.HORA_SOLICITUD||''; $('pedido').value=r.PEDIDO_REQUERIMIENTO||''; $('clienteProceso').value=r.CLIENTE_PROCESO||'Logística';
       $('referencia').value=r.REFERENCIA_CABLE||''; $('calibre').value=r.CALIBRE||''; $('tipoCable').value=r.TIPO_CABLE||''; $('colorCable').value=r.COLOR||''; $('metrosSolicitados').value=r.METROS_SOLICITADOS||''; $('ubicacionProducto').value=r.UBICACION_PRODUCTO||'';
       $('carreteLote').value=r.CARRETE_LOTE||''; $('disponibleAntes').value=r.METROS_DISPONIBLES_ANTES||''; $('autorizadoMenor50').value=r.AUTORIZADO_MENOR_50||'NO'; $('autorizadoPor').value=r.AUTORIZADO_POR||''; $('motivoAutorizacion').value=r.MOTIVO_AUTORIZACION||'';
-      $('fechaCorte').value=r.FECHA_CORTE||''; $('horaInicio').value=r.HORA_INICIO||''; $('horaFin').value=r.HORA_FIN||''; $('metrajeFinal').value=r.METRAJE_FINAL||''; $('remanenteReal').value=r.REMANENTE_REAL||''; $('evidenciaTexto').value=r.EVIDENCIA_DESCRIPCION||'';
-      $('corteUniforme').checked=r.CORTE_UNIFORME==='SI'; $('tramoRotulado').checked=r.TRAMO_ROTULADO==='SI'; $('evidenciaRegistro').checked=r.EVIDENCIA_REGISTRO==='SI';
-      franjaManual = true; setSegmentValue('franjaAtencion', r.FRANJA_ATENCION||'MISMO_DIA_TARDE', false); $('cumpleTiempo').value=r.CUMPLE_TIEMPO||'SI'; $('responsableChequeo').value=r.RESPONSABLE_CHEQUEO||''; $('responsableCorte').value=r.RESPONSABLE_CORTE||''; $('novedad').value=r.NOVEDAD||'SIN_NOVEDAD'; $('observacion').value=r.OBSERVACION||'';
-      records=records.filter(x=>x.id!==id); saveRecords(); calcRemanent(); renderAll(); window.scrollTo({top:0, behavior:'smooth'}); toast('Registro cargado para edición', 'click');
+      $('fechaCorte').value=r.FECHA_CORTE||''; $('horaInicio').value=r.HORA_INICIO||''; $('horaFin').value=r.HORA_FIN||''; $('metrajeFinal').value=r.METRAJE_FINAL||''; $('remanenteReal').value=r.REMANENTE_REAL||''; $('evidenciaTexto').value=r.EVIDENCIA_DESCRIPCION||'Registro digital';
+      $('corteUniforme').checked=r.CORTE_UNIFORME==='SI' || !r.CORTE_UNIFORME; $('tramoRotulado').checked=r.TRAMO_ROTULADO==='SI' || !r.TRAMO_ROTULADO; $('evidenciaRegistro').checked=r.EVIDENCIA_REGISTRO==='SI' || !r.EVIDENCIA_REGISTRO;
+      franjaManual = true; setSegmentValue('franjaAtencion', r.FRANJA_ATENCION||'MISMO_DIA_TARDE', false); $('cumpleTiempo').value=r.CUMPLE_TIEMPO||'PENDIENTE'; $('responsableChequeo').value=r.RESPONSABLE_CHEQUEO||''; $('responsableCorte').value=r.RESPONSABLE_CORTE||operatorName(); $('novedad').value=r.NOVEDAD||'SIN_NOVEDAD'; $('observacion').value=r.OBSERVACION||'';
+      calcRemanent(); updateCutWorkflow(); updateStatusPanel(); renderAll(); window.scrollTo({top:0, behavior:'smooth'}); toast('Aprobación cargada. Registre inicio y final del corte.', 'ok');
     }
 
     function rowsForExport(){
@@ -1527,6 +1706,7 @@
     function buildShareSummary(filename=''){
       const total=records.length; const counts=countByStatus();
       const pendientes=(counts.PENDIENTE_LIDER||0)+(counts.PENDIENTE_GERENCIA||0);
+      const aprobadosPendientes=counts.APROBADO_PENDIENTE_CORTE||0;
       const noConformes=(counts.NO_CONFORME||0)+(counts.SUSPENDIDO||0)+(counts.REVISAR||0)+(counts.RECHAZADO||0);
       const latest=records[0];
       const lastLine = latest ? `
@@ -1746,11 +1926,16 @@ Quedo atento(a) a la validación correspondiente.`;
     }
     function applyApprovalWorkflow(record){
       const req = approvalRequiredForRecord(record);
-      record.APROBACION_TIPO = req.tipo;
-      record.APROBACION_ESTADO = req.estado;
+      const wasApproved = record.APROBACION_ESTADO === 'APROBADO';
+      record.APROBACION_TIPO = record.APROBACION_TIPO || req.tipo;
+      record.APROBACION_ESTADO = wasApproved ? 'APROBADO' : req.estado;
       record.APROBADO_POR = record.APROBADO_POR || '';
       record.FECHA_APROBACION = record.FECHA_APROBACION || '';
-      if(req.estado === 'PENDIENTE'){
+      if(wasApproved){
+        record.CUMPLE_REMANENTE = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'AUTORIZADO' : 'SI';
+        record.ESTADO_CORTE = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'AUTORIZADO' : 'CONFORME';
+        record.CUMPLE_TIEMPO = record.HORA_INICIO && record.HORA_FIN ? 'SI' : 'PENDIENTE';
+      } else if(req.estado === 'PENDIENTE'){
         record.ESTADO_CORTE = req.status;
         record.CUMPLE_REMANENTE = req.tipo === 'VALIDACION_LIDER_50' ? 'VALIDACIÓN LÍDER LOGÍSTICO' : 'REQUIERE GERENCIA';
         record.FECHA_CORTE = '';
@@ -1868,6 +2053,107 @@ Quedo atento(a) a la validación correspondiente.`;
       catch(err){ toast('No fue posible crear el usuario.', 'error'); }
     }
     async function logoutFirebase(){ if(firebaseReady) await fb.signOut(fb.auth); toast('Sesión cerrada','click'); }
+
+    function updateNotificationUi(){
+      const status = $('notifyStatus');
+      const btn = $('btnEnableNotifications');
+      if(!status || !btn) return;
+      const supported = 'Notification' in window;
+      if(!supported){ status.textContent='Avisos no disponibles'; btn.hidden=true; return; }
+      const permission = Notification.permission;
+      if(approvalNotificationsEnabled && permission === 'granted'){
+        status.textContent='Avisos activos';
+        btn.textContent='Avisos activos';
+      }else if(permission === 'denied'){
+        status.textContent='Avisos bloqueados';
+        btn.textContent='Revisar avisos';
+      }else{
+        status.textContent='Avisos pendientes';
+        btn.textContent='Activar avisos';
+      }
+    }
+
+    async function enableApprovalNotifications(){
+      if(!('Notification' in window)){
+        toast('Este dispositivo no permite avisos del navegador.', 'error');
+        return;
+      }
+      let permission = Notification.permission;
+      if(permission === 'default') permission = await Notification.requestPermission();
+      if(permission === 'granted'){
+        approvalNotificationsEnabled = true;
+        localStorage.setItem(NOTIFY_KEY, '1');
+        updateNotificationUi();
+        notifyDevice('Avisos activados', 'Recibirá aviso cuando llegue una aprobación pendiente.', 'avisos-activos');
+        toast('Avisos activados', 'ok');
+      }else{
+        approvalNotificationsEnabled = false;
+        localStorage.setItem(NOTIFY_KEY, '0');
+        updateNotificationUi();
+        toast('Los avisos no fueron autorizados en el navegador.', 'error');
+      }
+    }
+
+    function notifyDevice(title, body, tag='aprobacion'){
+      try{
+        if(!approvalNotificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+        const options = {body, tag, icon:'icon-192.png', badge:'icon-192.png', data:{url:location.href}};
+        if(navigator.serviceWorker && navigator.serviceWorker.getRegistration){
+          navigator.serviceWorker.getRegistration().then(reg=>{
+            if(reg && reg.showNotification) reg.showNotification(title, options);
+            else new Notification(title, options);
+          }).catch(()=>new Notification(title, options));
+        }else{
+          new Notification(title, options);
+        }
+      }catch(_e){}
+    }
+
+    function approvalNoticeTarget(record){
+      if(!currentUser || !currentProfile || !record) return false;
+      if(record.APROBACION_ESTADO === 'PENDIENTE' && canApprove(record)) return true;
+      if(isRole('OPERARIO') && isOwnRecord(record) && (record.APROBACION_ESTADO === 'APROBADO' || record.APROBACION_ESTADO === 'RECHAZADO')) return true;
+      return false;
+    }
+
+    function approvalNoticeKey(record){
+      return [record.id || record.CONSECUTIVO || '', record.APROBACION_ESTADO || '', record.APROBACION_TIPO || '', record.FECHA_APROBACION || ''].join('|');
+    }
+
+    function approvalNoticeMessage(record){
+      if(record.APROBACION_ESTADO === 'APROBADO'){
+        return {title:'Corte aprobado', body:`El corte ${record.CONSECUTIVO || ''} fue aprobado. Ya puede continuar y registrar las horas.`};
+      }
+      if(record.APROBACION_ESTADO === 'RECHAZADO'){
+        return {title:'Solicitud rechazada', body:`La solicitud ${record.CONSECUTIVO || ''} fue rechazada. Revise la novedad antes de continuar.`};
+      }
+      const who = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'Gerencia' : 'Líder Logístico';
+      return {title:`Nueva aprobación pendiente`, body:`${who}: ${record.CONSECUTIVO || ''} · Carrete ${record.CARRETE_LOTE || ''} · Remanente ${record.REMANENTE_PROYECTADO || ''} m`};
+    }
+
+    function checkApprovalNotifications(){
+      const targets = records.filter(approvalNoticeTarget);
+      const currentKeys = new Set(targets.map(approvalNoticeKey));
+      if(!approvalNotificationInitialized){
+        knownApprovalNoticeKeys = currentKeys;
+        approvalNotificationInitialized = true;
+        return;
+      }
+      const incoming = targets.filter(r=>!knownApprovalNoticeKeys.has(approvalNoticeKey(r)));
+      knownApprovalNoticeKeys = currentKeys;
+      if(!incoming.length) return;
+      const panel = $('approvalPanel');
+      if(panel){ panel.classList.remove('notice-pulse'); void panel.offsetWidth; panel.classList.add('notice-pulse'); }
+      incoming.slice(0,3).forEach((r, idx)=>{
+        const msg = approvalNoticeMessage(r);
+        setTimeout(()=>{
+          beep('error');
+          toast(msg.title + ': ' + msg.body, 'ok');
+          notifyDevice(msg.title, msg.body, 'aprobacion-' + approvalNoticeKey(r));
+        }, idx * 450);
+      });
+    }
+
     function subscribeCloudRecords(){
       if(!firebaseReady || !currentUser) return;
       if(cloudRecordsUnsub) cloudRecordsUnsub();
@@ -1877,6 +2163,7 @@ Quedo atento(a) a la validación correspondiente.`;
         saveRecords();
         renderAll();
         renderApprovalPanel();
+        checkApprovalNotifications();
       }, ()=>updateCloudStatus('Nube sin lectura','warn'));
     }
     function subscribeUsers(){
@@ -1909,7 +2196,7 @@ Quedo atento(a) a la validación correspondiente.`;
     }
     window.approveRecord = async function(id){
       const r = records.find(x=>x.id===id); if(!r || !canApprove(r)) return toast('No tiene permiso para aprobar esta solicitud.', 'error');
-      r.APROBACION_ESTADO='APROBADO'; r.APROBADO_POR=`${currentProfile?.nombre || currentUser.email} (${userRole()})`; r.FECHA_APROBACION=todayHuman(); r.ESTADO_CORTE = r.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'AUTORIZADO' : 'CONFORME';
+      r.APROBACION_ESTADO='APROBADO'; r.APROBADO_POR=`${currentProfile?.nombre || currentUser.email} (${userRole()})`; r.FECHA_APROBACION=todayHuman(); r.ESTADO_CORTE = 'APROBADO_PENDIENTE_CORTE'; r.CUMPLE_TIEMPO='PENDIENTE';
       if(r.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50'){ r.AUTORIZADO_MENOR_50='SI'; r.AUTORIZADO_POR='Gerencia'; }
       saveRecords(); renderAll(); renderApprovalPanel();
       try{ await saveRecordToCloud(r); toast('Solicitud aprobada','ok'); }catch(e){toast('Aprobada localmente. Revise conexión.', 'error');}
@@ -1982,6 +2269,11 @@ Quedo atento(a) a la validación correspondiente.`;
     document.querySelectorAll('[data-view-btn]').forEach(btn=>btn.addEventListener('click', ()=>setView(btn.dataset.viewBtn)));
     document.querySelectorAll('[data-export]').forEach(btn=>btn.addEventListener('click', ()=>exportRecords(btn.dataset.export)));
     $('cutForm').addEventListener('submit', saveRecord);
+    $('btnSaveRecord').addEventListener('click', ()=>{submitIntent='record';});
+    $('btnSendApproval').addEventListener('click', ()=>{submitIntent='approval'; $('cutForm').requestSubmit();});
+    $('btnStartCut').addEventListener('click', startCutTime);
+    $('btnEndCut').addEventListener('click', endCutTime);
+    ['horaInicio','horaFin'].forEach(id=>$(id).addEventListener('input', updateDuration));
     $('btnClearForm').addEventListener('click', ()=>clearForm(true));
     $('btnToday').addEventListener('click', ()=>{const n=nowParts(); $('fechaSolicitud').value=n.date; $('horaSolicitud').value=n.time; $('fechaCorte').value=n.date; franjaManual=false; autoFranja(true); updateStatusPanel(); toast('Fecha y hora actualizadas', 'ok');});
     $('btnRefresh').addEventListener('click', ()=>{renderAll(); toast('Vista actualizada', 'ok');});
@@ -1993,6 +2285,7 @@ Quedo atento(a) a la validación correspondiente.`;
     if($('btnRegisterUser')) $('btnRegisterUser').addEventListener('click', registerFirebaseUser);
     if($('btnLogout')) $('btnLogout').addEventListener('click', logoutFirebase);
     if($('btnPreapproveUser')) $('btnPreapproveUser').addEventListener('click', preapproveUser);
+    if($('btnEnableNotifications')) $('btnEnableNotifications').addEventListener('click', enableApprovalNotifications);
     $('btnPrint').addEventListener('click', ()=>window.print());
     $('btnDeleteAll').addEventListener('click', async ()=>{
       if(!canDeleteRecords()) return toast('Solo Líder Logístico o Gerencia pueden borrar registros.', 'error');
@@ -2014,7 +2307,7 @@ Quedo atento(a) a la validación correspondiente.`;
       });
     });
     $('btnAutoFranja').addEventListener('click', ()=>{franjaManual=false; autoFranja(true); toast('Franja calculada automáticamente', 'ok');});
-    ['metrosSolicitados','disponibleAntes','horaSolicitud','autorizadoMenor50','autorizadoPor','motivoAutorizacion','corteUniforme','tramoRotulado','evidenciaRegistro','cumpleTiempo','novedad','pedido','referencia','carreteLote'].forEach(id=>$(id).addEventListener('input', calcRemanent));
+    ['metrosSolicitados','disponibleAntes','horaSolicitud','autorizadoMenor50','autorizadoPor','motivoAutorizacion','corteUniforme','tramoRotulado','evidenciaRegistro','cumpleTiempo','novedad','pedido','referencia','carreteLote','metrajeFinal','remanenteReal','responsableChequeo'].forEach(id=>$(id).addEventListener('input', calcRemanent));
     ['autorizadoMenor50','autorizadoPor','cumpleTiempo','novedad'].forEach(id=>$(id).addEventListener('change', calcRemanent));
 
     setupInstallPrompt();
@@ -2024,6 +2317,7 @@ Quedo atento(a) a la validación correspondiente.`;
     setSegmentValue('franjaAtencion', val('franjaAtencion') || 'MISMO_DIA_TARDE', false);
     enhanceAdaptiveInputs();
     setView(localStorage.getItem('control_corte_view') || 'auto');
+    updateNotificationUi();
     setAuthView();
     initFirebase();
     calcRemanent();

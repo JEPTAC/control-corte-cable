@@ -39,9 +39,21 @@ service cloud.firestore {
       allow create: if isOperario()
         && request.resource.data.SOLICITANTE_UID == request.auth.uid
         && request.resource.data.RESPONSABLE_CORTE_CORREO == request.auth.token.email;
-      allow update: if (isLider() && resource.data.APROBACION_TIPO == "VALIDACION_LIDER_50")
+
+      allow update: if
+        (isLider() && resource.data.APROBACION_TIPO == "VALIDACION_LIDER_50")
         || (isGerencia() && resource.data.APROBACION_TIPO == "AUTORIZACION_GERENCIA_MENOR_50")
-        || isGerencia();
+        || isGerencia()
+        || (
+          isOperario()
+          && resource.data.SOLICITANTE_UID == request.auth.uid
+          && request.resource.data.SOLICITANTE_UID == request.auth.uid
+          && resource.data.APROBACION_ESTADO == "APROBADO"
+          && request.resource.data.APROBACION_ESTADO == "APROBADO"
+          && request.resource.data.APROBACION_TIPO == resource.data.APROBACION_TIPO
+          && request.resource.data.APROBADO_POR == resource.data.APROBADO_POR
+        );
+
       allow delete: if isGerencia() || isLider();
     }
   }
