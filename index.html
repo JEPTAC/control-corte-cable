@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Control de Corte de Cable | Electroingeniería</title>
-  <!-- versión 3.8.9: corrección cálculo sobrante y condición -->
+  <!-- versión 3.9.0: regla especial de remanente para Alumbrado -->
   <style>
     :root{
       --navy:#0b2a5b;
@@ -867,11 +867,14 @@
           </div>
           <div class="auth-panel">
             <div class="auth-title"><strong>Flujo de aprobación</strong></div>
-            <div class="approval-meta">Operario registra datos mínimos. Si el sobrante queda en 50 m o menor a 50 m, la solicitud queda pendiente y no se continúa el corte hasta aprobación.</div>
+            <div class="approval-meta">Operario registra datos mínimos. Ventas: 50 m / Alumbrado: 15 m y 10 m. Si requiere aprobación, no se continúa el corte hasta recibir respuesta.</div>
             <div class="auth-actions">
-              <span class="user-chip">&gt;50 m: permitido</span>
-              <span class="user-chip">=50 m: líder</span>
-              <span class="user-chip">&lt;50 m: gerencia</span>
+              <span class="user-chip">Ventas &gt;50 m: permitido</span>
+              <span class="user-chip">Ventas =50 m: líder</span>
+              <span class="user-chip">Ventas &lt;50 m: gerencia</span>
+              <span class="user-chip">Alumbrado ≥15 m: permitido</span>
+              <span class="user-chip">Alumbrado &lt;15 m: logística</span>
+              <span class="user-chip">Alumbrado &lt;10 m: gerencia</span>
               <button type="button" class="btn-primary btn-small" id="btnEnableNotifications">Activar avisos</button>
               <span class="user-chip" id="notifyStatus">Avisos pendientes</span>
             </div>
@@ -961,7 +964,7 @@
               <div class="form-grid">
                 <div class="field col-6 primary-input"><label for="responsableChequeo">Auxiliar de chequeo / recolección</label><input id="responsableChequeo" placeholder="Nombre del auxiliar que chequeó" /></div>
                 <div class="field col-6 session-filled"><label for="responsableCorte">Responsable del corte</label><input id="responsableCorte" readonly placeholder="Se toma del usuario activo" /><div class="adaptive-hint" id="responsableCorteInfo">Se completa automáticamente con el usuario activo.</div></div>
-                <div class="field col-12 primary-input"><label for="motivoAutorizacion">Razón / observación de aprobación</label><textarea id="motivoAutorizacion" placeholder="Solo cuando el sobrante sea igual o menor a 50 m, indique la razón"></textarea></div>
+                <div class="field col-12 primary-input"><label for="motivoAutorizacion">Razón / observación de aprobación</label><textarea id="motivoAutorizacion" placeholder="Solo cuando el sobrante requiera aprobación, indique la razón"></textarea></div>
                 <div class="col-12 status-panel" id="statusPanel">
                   <div class="status-label">Estado calculado</div>
                   <div class="status-value" id="estadoCalculado">Pendiente</div>
@@ -1313,47 +1316,39 @@
       const disponible = num('disponibleAntes');
       const solicitado = num('metrosSolicitados');
       const hasValues = Number.isFinite(disponible) && Number.isFinite(solicitado) && disponible > 0 && solicitado > 0;
-      const rem = hasValues ? +(disponible - solicitado).toFixed(2) : 0;
+      const rem = hasValues ? +(disponible - solicitado).toFixed(2) : NaN;
+      const tipo = selectedOrderType();
+      const rule = remanentRule(tipo, rem);
+
       $('remanenteProyectado').value = hasValues ? normalizeDecimal(rem) : '';
       if($('remanenteReal') && !cutIsFinished) $('remanenteReal').value = hasValues ? normalizeDecimal(rem) : '';
       if($('metrajeFinal') && cutUnlocked() && !cutIsRunning && !cutIsFinished && !val('metrajeFinal')) $('metrajeFinal').value = solicitado > 0 ? normalizeDecimal(solicitado) : '';
-      let restriccion = '';
-      if(hasValues){
-        if(rem > 50) restriccion = '>50 m';
-        else if(rem === 50) restriccion = '=50 m';
-        else restriccion = '<50 m';
-      }
-      $('restriccionRemanente').value = restriccion;
+      $('restriccionRemanente').value = hasValues ? rule.condition : '';
 
       const calc = $('calcSummary');
       if(calc){
         calc.classList.remove('ok','warn','stop');
         if(hasValues){
-          const route = rem > 50
-            ? 'No requiere aprobación. Puede continuar con el corte normal.'
-            : (rem === 50
-                ? 'Requiere validación del Líder Logístico. No continuar hasta aprobación.'
-                : 'Requiere autorización de Gerencia. No continuar hasta aprobación.');
-          calc.classList.add(rem > 50 ? 'ok' : (rem === 50 ? 'warn' : 'stop'));
-          calc.innerHTML = `<div class="calc-formula">${normalizeDecimal(disponible)} m − ${normalizeDecimal(solicitado)} m = <span>${normalizeDecimal(rem)} m</span></div><div class="calc-rule"><strong>${restriccion || 'Sin condición'}</strong><br>${route}</div>`;
+          calc.classList.add(rule.css);
+          const tipoLabel = tipo === 'ALUMBRADO' ? 'Alumbrado' : 'Ventas';
+          calc.innerHTML = `<div class="calc-formula">${normalizeDecimal(disponible)} m − ${normalizeDecimal(solicitado)} m = <span>${normalizeDecimal(rem)} m</span></div><div class="calc-rule"><strong>${tipoLabel}: ${rule.condition}</strong><br>${rule.route}</div>`;
         }else{
           calc.innerHTML = '<div class="calc-formula">Disponible − a cortar = <span>Sobrante</span></div><div class="calc-rule">Ingrese los metros disponibles y los metros a cortar para calcular la restricción.</div>';
         }
       }
 
       if($('autorizadoMenor50')) $('autorizadoMenor50').value = 'NO';
-      if($('autorizadoPor')) $('autorizadoPor').value = rem < 50 ? 'Gerencia' : (rem === 50 ? 'Jefatura Logística' : '');
-      if($('novedad')) $('novedad').value = (hasValues && rem <= 50 && !currentFormApproved()) ? 'SUSPENDIDO' : 'SIN_NOVEDAD';
-      if($('cumpleTiempo')) $('cumpleTiempo').value = (hasValues && rem <= 50 && !currentFormApproved()) ? 'PENDIENTE' : 'SI';
+      if($('autorizadoPor')) $('autorizadoPor').value = rule.authorizedBy || '';
+      if($('novedad')) $('novedad').value = (hasValues && rule.requires && !currentFormApproved()) ? 'SUSPENDIDO' : 'SIN_NOVEDAD';
+      if($('cumpleTiempo')) $('cumpleTiempo').value = (hasValues && rule.requires && !currentFormApproved()) ? 'PENDIENTE' : 'SI';
       if($('observacion')) $('observacion').value = val('motivoAutorizacion');
 
       const gate = $('approvalGate');
       const gateText = $('approvalGateText');
-      if(gate && hasValues && rem <= 50 && !currentFormApproved()){
+      if(gate && hasValues && rule.requires && !currentFormApproved()){
         gate.classList.add('show');
-        gateText.innerHTML = rem < 50
-          ? '<strong>Requiere autorización de Gerencia.</strong><br>Presione <strong>Enviar aprobación</strong>. El corte queda bloqueado hasta recibir respuesta.<br><span class="approval-route">Ruta: Operario → Gerencia</span>'
-          : '<strong>Requiere validación del Líder Logístico.</strong><br>Presione <strong>Enviar aprobación</strong>. El corte queda bloqueado hasta recibir respuesta.<br><span class="approval-route">Ruta: Operario → Líder Logístico</span>';
+        const routeName = rule.approver === 'Gerencia' ? 'Operario → Gerencia' : 'Operario → Líder Logístico';
+        gateText.innerHTML = `<strong>${rule.message}</strong><br>Presione <strong>Enviar aprobación</strong>. El corte queda bloqueado hasta recibir respuesta.<br><span class="approval-route">Ruta: ${routeName}</span>`;
       }else if(gate){
         gate.classList.remove('show');
         if(gateText) gateText.innerHTML = '<strong>Requiere aprobación.</strong><br>Guarde la solicitud y no continúe el corte hasta recibir aprobación.';
@@ -1369,16 +1364,47 @@
       const n = parseDecimal(raw);
       return Number.isFinite(n) ? n : NaN;
     }
+    function selectedOrderType(){
+      const tipo = val('tipoPedido') || 'VENTAS';
+      return String(tipo).toUpperCase();
+    }
+    function remanentRule(tipo, rem){
+      const t = String(tipo || 'VENTAS').toUpperCase();
+      if(!Number.isFinite(rem)){
+        return {requires:false, approvalType:'NO_REQUIERE', status:'PENDIENTE', condition:'', css:'warn', route:'Ingrese los metros disponibles y los metros a cortar para calcular la restricción.', approver:'', authorizedBy:'', message:'Ingrese metros y carrete para habilitar el corte.'};
+      }
+
+      if(t === 'ALUMBRADO'){
+        if(rem < 10){
+          return {requires:true, approvalType:'AUTORIZACION_GERENCIA_MENOR_50', status:'PENDIENTE_GERENCIA', condition:'<10 m', css:'stop', route:'Alumbrado: requiere autorización de Gerencia. No continuar hasta aprobación.', approver:'Gerencia', authorizedBy:'Gerencia', message:'Requiere autorización de Gerencia por sobrante menor a 10 m.'};
+        }
+        if(rem < 15){
+          return {requires:true, approvalType:'VALIDACION_LIDER_50', status:'PENDIENTE_LIDER', condition:'<15 m', css:'warn', route:'Alumbrado: requiere aprobación de Logística. No continuar hasta aprobación.', approver:'Líder Logístico', authorizedBy:'Jefatura Logística', message:'Requiere aprobación de Logística por sobrante menor a 15 m.'};
+        }
+        return {requires:false, approvalType:'NO_REQUIERE', status:'CONFORME', condition: rem === 15 ? '=15 m' : '>15 m', css:'ok', route:'Alumbrado: no requiere aprobación. Puede continuar con el corte normal.', approver:'', authorizedBy:'', message:'Corte habilitado.'};
+      }
+
+      if(rem < 50){
+        return {requires:true, approvalType:'AUTORIZACION_GERENCIA_MENOR_50', status:'PENDIENTE_GERENCIA', condition:'<50 m', css:'stop', route:'Ventas: requiere autorización de Gerencia. No continuar hasta aprobación.', approver:'Gerencia', authorizedBy:'Gerencia', message:'Requiere autorización de Gerencia por sobrante menor a 50 m.'};
+      }
+      if(rem === 50){
+        return {requires:true, approvalType:'VALIDACION_LIDER_50', status:'PENDIENTE_LIDER', condition:'=50 m', css:'warn', route:'Ventas: requiere validación del Líder Logístico. No continuar hasta aprobación.', approver:'Líder Logístico', authorizedBy:'Jefatura Logística', message:'Requiere validación del Líder Logístico por sobrante igual a 50 m.'};
+      }
+      return {requires:false, approvalType:'NO_REQUIERE', status:'CONFORME', condition:'>50 m', css:'ok', route:'Ventas: no requiere aprobación. Puede continuar con el corte normal.', approver:'', authorizedBy:'', message:'Corte habilitado.'};
+    }
+    function currentRule(){
+      return remanentRule(selectedOrderType(), selectedRemanent());
+    }
     function approvalRequiredNow(){
-      const rem = selectedRemanent();
-      return Number.isFinite(rem) && rem <= 50;
+      return currentRule().requires;
     }
     function currentFormApproved(){
       return val('aprobacionEstadoActual') === 'APROBADO';
     }
     function cutUnlocked(){
       const rem = selectedRemanent();
-      return Number.isFinite(rem) && (rem > 50 || currentFormApproved());
+      const rule = remanentRule(selectedOrderType(), rem);
+      return Number.isFinite(rem) && (!rule.requires || currentFormApproved());
     }
     function setFieldsetDisabled(fieldset, disabled){
       if(!fieldset) return;
@@ -1454,9 +1480,10 @@
     function updateCutWorkflow(){
       const rem = selectedRemanent();
       const hasRem = Number.isFinite(rem);
-      const requires = hasRem && rem <= 50;
+      const rule = remanentRule(selectedOrderType(), rem);
+      const requires = hasRem && rule.requires;
       const approved = currentFormApproved();
-      const unlocked = hasRem && (rem > 50 || approved);
+      const unlocked = hasRem && (!rule.requires || approved);
       const measure = $('cutMeasureSection');
       const lock = $('cutLockNote');
       const sendBtn = $('btnSendApproval');
@@ -1571,15 +1598,15 @@
       if(franjaManual && !force) return;
       const h = val('horaSolicitud');
       if(!h) return;
-      const rem = parseDecimal($('remanenteProyectado').value);
-      const authorized = val('autorizadoMenor50') === 'SI';
+      const rule = currentRule();
       let nextValue = h <= '11:00' ? 'MISMO_DIA_TARDE' : 'DIA_HABIL_SIGUIENTE_MANANA';
-      if(Number.isFinite(rem) && rem < 50 && !authorized) nextValue = 'SUSPENDIDO_NOVEDAD_AUTORIZACION';
+      if(rule.requires && !currentFormApproved()) nextValue = 'SUSPENDIDO_NOVEDAD_AUTORIZACION';
       setSegmentValue('franjaAtencion', nextValue, false);
     }
 
     function computeStatusFromForm(){
       const rem = parseDecimal($('remanenteProyectado').value);
+      const rule = remanentRule(selectedOrderType(), rem);
       const authorized = val('autorizadoMenor50') === 'SI';
       const hasAuthData = authorized && val('autorizadoPor') && val('motivoAutorizacion');
       const qualityOk = $('corteUniforme').checked && $('tramoRotulado').checked && $('evidenciaRegistro').checked;
@@ -1587,9 +1614,8 @@
       const franja = val('franjaAtencion');
       const cumpleTiempo = val('cumpleTiempo');
       if(!val('tipoPedido') || !val('referencia') || !val('carreteLote') || !val('metrosSolicitados') || !val('disponibleAntes')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete tipo de pedido, cable, metros a cortar y carrete para calcular el estado.', cls:'status-warn'};
-      if(Number.isFinite(rem) && rem < 50 && !currentFormApproved()) return {estado:'PENDIENTE_GERENCIA', label:'Pendiente gerencia', detail:'Remanente menor a 50 m: requiere autorización de Gerencia antes del corte.', cls:'status-warn'};
-      if(Number.isFinite(rem) && rem === 50 && !currentFormApproved()) return {estado:'PENDIENTE_LIDER', label:'Pendiente líder', detail:'Remanente igual a 50 m: requiere validación del Líder Logístico.', cls:'status-warn'};
-      if(Number.isFinite(rem) && rem <= 50 && currentFormApproved() && (!val('horaInicio') || !val('horaFin'))) return {estado:'APROBADO_PENDIENTE_CORTE', label:'Aprobado, pendiente corte', detail:'La aprobación fue recibida. Registre hora de inicio y finalización.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rule.requires && !currentFormApproved()) return {estado:rule.status, label: rule.status === 'PENDIENTE_GERENCIA' ? 'Pendiente gerencia' : 'Pendiente líder', detail: rule.message + ' No se puede iniciar el corte sin aprobación.', cls:'status-warn'};
+      if(Number.isFinite(rem) && rule.requires && currentFormApproved() && (!val('horaInicio') || !val('horaFin'))) return {estado:'APROBADO_PENDIENTE_CORTE', label:'Aprobado, pendiente corte', detail:'La aprobación fue recibida. Inicie y finalice el corte con el cronómetro.', cls:'status-warn'};
       if(novedad === 'RETRABAJO_NO_CONFORME' || !qualityOk) return {estado:'NO_CONFORME', label:'No conforme', detail:'Existe retrabajo/no conformidad o falta un control de calidad.', cls:'status-stop'};
       if(franja === 'SUSPENDIDO_NOVEDAD_AUTORIZACION') return {estado:'SUSPENDIDO', label:'Suspendido', detail:'La solicitud quedó suspendida por novedad o autorización pendiente.', cls:'status-stop'};
       if(cumpleTiempo === 'NO') return {estado:'REVISAR', label:'Revisar tiempo', detail:'El registro indica incumplimiento de la franja de atención.', cls:'status-warn'};
@@ -1608,6 +1634,7 @@
       const status = computeStatusFromForm();
       const n=nowParts();
       const rem = parseDecimal($('remanenteProyectado').value);
+      const rule = remanentRule(val('tipoPedido') || 'VENTAS', rem);
       const metrajeFinal = num('metrajeFinal');
       const remRealRaw = val('remanenteReal');
       const remReal = remRealRaw ? parseDecimal(remRealRaw) : rem;
@@ -1615,7 +1642,7 @@
       const operador = operatorName();
       let cumpleRemanente = 'NO';
       if(Number.isFinite(rem)){
-        cumpleRemanente = rem >= 50 ? 'SI' : (val('autorizadoMenor50') === 'SI' ? 'AUTORIZADO' : 'NO');
+        cumpleRemanente = !rule.requires ? 'SI' : (currentFormApproved() ? 'APROBADO' : 'NO');
       }
       return {
         id: val('registroId') || (crypto.randomUUID ? crypto.randomUUID() : 'REG-' + Date.now()),
@@ -1691,7 +1718,7 @@
         if(!$('remanenteReal').value) $('remanenteReal').value = $('remanenteProyectado').value;
         $('novedad').value = 'SIN_NOVEDAD';
       }
-      if(Number.isFinite(rem) && rem <= 50 && !currentFormApproved()){
+      if(approvalRequiredNow() && !currentFormApproved()){
         $('metrajeFinal').value = '';
         $('fechaCorte').value = '';
         $('horaInicio').value = '';
@@ -1709,7 +1736,7 @@
       applyQuickDefaultsBeforeSave();
       if(!operatorName()){ toast('No se identificó el responsable del corte. Cierre sesión e ingrese nuevamente.', 'error'); return false; }
       const rem = parseDecimal($('remanenteProyectado').value);
-      const approvalNeeded = Number.isFinite(rem) && rem <= 50;
+      const approvalNeeded = approvalRequiredNow();
       const approved = currentFormApproved();
       const required = ['tipoPedido','referencia','metrosSolicitados','carreteLote','disponibleAntes'];
       if(submitIntent === 'approval') required.push('motivoAutorizacion');
@@ -2331,9 +2358,9 @@ Quedo atento(a) a la validación correspondiente.`;
     function canCreateRecords(){return !!currentUser && !!currentProfile && isRole('OPERARIO')}
     function approvalRequiredForRecord(record){
       const rem = Number(String(record.REMANENTE_PROYECTADO || '').replace(',','.'));
-      if(Number.isFinite(rem) && rem < 50) return {tipo:'AUTORIZACION_GERENCIA_MENOR_50', estado:'PENDIENTE', status:'PENDIENTE_GERENCIA'};
-      if(Number.isFinite(rem) && rem === 50) return {tipo:'VALIDACION_LIDER_50', estado:'PENDIENTE', status:'PENDIENTE_LIDER'};
-      return {tipo:'NO_REQUIERE', estado:'NO_REQUIERE', status:record.ESTADO_CORTE};
+      const rule = remanentRule(record.TIPO_PEDIDO || 'VENTAS', rem);
+      if(rule.requires) return {tipo:rule.approvalType, estado:'PENDIENTE', status:rule.status, message:rule.message};
+      return {tipo:'NO_REQUIERE', estado:'NO_REQUIERE', status:record.ESTADO_CORTE, message:''};
     }
     function canApprove(record){
       if(!currentUser || !currentProfile) return false;
@@ -2350,12 +2377,12 @@ Quedo atento(a) a la validación correspondiente.`;
       record.APROBADO_POR = record.APROBADO_POR || '';
       record.FECHA_APROBACION = record.FECHA_APROBACION || '';
       if(wasApproved){
-        record.CUMPLE_REMANENTE = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'AUTORIZADO' : 'SI';
-        record.ESTADO_CORTE = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'AUTORIZADO' : 'CONFORME';
+        record.CUMPLE_REMANENTE = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'AUTORIZADO GERENCIA' : 'APROBADO LOGÍSTICA';
+        record.ESTADO_CORTE = 'APROBADO_PENDIENTE_CORTE';
         record.CUMPLE_TIEMPO = record.HORA_INICIO && record.HORA_FIN ? 'SI' : 'PENDIENTE';
       } else if(req.estado === 'PENDIENTE'){
         record.ESTADO_CORTE = req.status;
-        record.CUMPLE_REMANENTE = req.tipo === 'VALIDACION_LIDER_50' ? 'VALIDACIÓN LÍDER LOGÍSTICO' : 'REQUIERE GERENCIA';
+        record.CUMPLE_REMANENTE = req.tipo === 'VALIDACION_LIDER_50' ? 'REQUIERE LOGÍSTICA' : 'REQUIERE GERENCIA';
         record.FECHA_CORTE = '';
         record.HORA_INICIO = '';
         record.HORA_FIN = '';
@@ -2365,7 +2392,7 @@ Quedo atento(a) a la validación correspondiente.`;
         record.TRAMO_ROTULADO = '';
         record.EVIDENCIA_REGISTRO = '';
         record.CUMPLE_TIEMPO = 'PENDIENTE';
-        record.OBSERVACION = cleanText([record.OBSERVACION, req.tipo === 'VALIDACION_LIDER_50' ? 'Pendiente validación de Líder Logístico por remanente igual a 50 m. No continuar el corte hasta aprobación.' : 'Pendiente autorización de Gerencia por remanente menor a 50 m. No continuar el corte hasta aprobación.'].filter(Boolean).join(' '));
+        record.OBSERVACION = cleanText([record.OBSERVACION, (req.message || (req.tipo === 'VALIDACION_LIDER_50' ? 'Pendiente aprobación de Logística.' : 'Pendiente autorización de Gerencia.')) + ' No continuar el corte hasta aprobación.'].filter(Boolean).join(' '));
       }
       record.SOLICITANTE_UID = currentUser?.uid || record.SOLICITANTE_UID || '';
       record.SOLICITANTE_CORREO = currentUser?.email || record.SOLICITANTE_CORREO || '';
@@ -2583,7 +2610,7 @@ Quedo atento(a) a la validación correspondiente.`;
       if(record.APROBACION_ESTADO === 'RECHAZADO'){
         return {title:'Solicitud rechazada', body:`La solicitud ${record.CONSECUTIVO || ''} fue rechazada. Revise la novedad antes de continuar.`};
       }
-      const who = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'Gerencia' : 'Líder Logístico';
+      const who = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'Gerencia' : 'Logística';
       return {title:`Nueva aprobación pendiente`, body:`${who}: ${record.CONSECUTIVO || ''} · Carrete ${record.CARRETE_LOTE || ''} · Remanente ${record.REMANENTE_PROYECTADO || ''} m`};
     }
 
@@ -2646,7 +2673,7 @@ Quedo atento(a) a la validación correspondiente.`;
       if(!list.length){$('approvalList').innerHTML='<div class="empty-soft">No hay solicitudes pendientes.</div>'; return;}
       $('approvalList').innerHTML = list.map(r=>{
         const allowed = canApprove(r);
-        const label = r.APROBACION_TIPO === 'VALIDACION_LIDER_50' ? 'Validación Líder Logístico' : 'Autorización Gerencia';
+        const label = r.APROBACION_TIPO === 'VALIDACION_LIDER_50' ? 'Aprobación Logística' : 'Autorización Gerencia';
         return `<div class="approval-item"><strong>${escapeHtml(label)}</strong><div class="approval-meta">${escapeHtml(r.CONSECUTIVO||'')} · Pedido ${escapeHtml(r.PEDIDO_REQUERIMIENTO||'')} · ${escapeHtml(r.CLIENTE_PROCESO||'')}<br>Carrete ${escapeHtml(r.CARRETE_LOTE||'')} · Remanente ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Motivo: ${escapeHtml(r.MOTIVO_AUTORIZACION || r.OBSERVACION || 'Sin detalle')}</div><div class="approval-actions">${allowed?`<button type="button" class="btn-green" onclick="approveRecord('${r.id}')">Aprobar</button><button type="button" class="btn-red" onclick="rejectRecord('${r.id}')">Rechazar</button>`:'<span class="user-chip">Sin permiso para aprobar</span>'}</div></div>`;
       }).join('');
     }
