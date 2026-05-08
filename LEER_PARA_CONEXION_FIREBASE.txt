@@ -10,3 +10,9 @@ Flujo operativo:
 5. El Excel conserva las columnas separadas y la trazabilidad del usuario.
 
 Después de subir estos archivos a GitHub Pages, copie el contenido de firestore.rules en Firebase > Firestore Database > Reglas y publique.
+
+
+Versión 3.8.6: corrige cálculo de sobrante con decimales usando coma y despliegue de aprobación automática por remanente.
+
+
+Versión 3.8.7: cronómetro en vivo para inicio/finalización de corte. No cambia reglas de Firestore.

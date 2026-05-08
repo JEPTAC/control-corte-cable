@@ -771,6 +771,44 @@
     @media(max-width:1050px){.analytics-kpis{grid-template-columns:repeat(3,1fr)}.analytics-grid{grid-template-columns:1fr}.analytics-filter-grid .field,.analytics-filter-grid .field.search-wide,.analytics-filter-grid .actions{grid-column:span 6}}
     @media(max-width:760px){.app-menu{display:grid;grid-template-columns:1fr;gap:8px}.app-menu button{width:100%}.analytics-kpis{grid-template-columns:repeat(2,1fr)}.analytics-filter-grid{grid-template-columns:1fr}.analytics-filter-grid .field,.analytics-filter-grid .field.search-wide,.analytics-filter-grid .actions{grid-column:span 1}.analytics-filter-grid .actions button{flex:1 1 100%}.analytics-chart .bar-row{grid-template-columns:110px 1fr 48px}.operator-simple textarea{min-height:170px}.exports-minimal{grid-template-columns:1fr !important}}
 
+
+    .live-timer-card{
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns: minmax(160px, 260px) 1fr;
+      gap:14px;
+      align-items:center;
+      background:linear-gradient(135deg, rgba(11,42,91,.96), rgba(0,138,138,.92));
+      color:#fff;
+      border-radius:20px;
+      padding:16px 18px;
+      box-shadow:0 14px 32px rgba(11,42,91,.18);
+      margin-bottom:4px;
+    }
+    .timer-display{
+      font-size:clamp(2rem, 4.8vw, 3.4rem);
+      line-height:1;
+      font-weight:900;
+      letter-spacing:.02em;
+      font-variant-numeric:tabular-nums;
+      text-align:center;
+      padding:12px 14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.13);
+      border:1px solid rgba(255,255,255,.25);
+    }
+    .timer-copy strong{display:block;font-size:1.05rem;margin-bottom:4px}
+    .timer-copy span{display:block;color:rgba(255,255,255,.86);font-size:.92rem;line-height:1.35}
+    .cut-running .timer-display{animation:pulseTimer 1.2s ease-in-out infinite alternate;}
+    @keyframes pulseTimer{from{box-shadow:0 0 0 rgba(255,255,255,0)}to{box-shadow:0 0 0 6px rgba(255,255,255,.12)}}
+    .time-actions button:disabled{opacity:.48; cursor:not-allowed; transform:none; filter:grayscale(.25)}
+    .final-fields-locked{opacity:.66}
+    @media (max-width:720px){
+      .live-timer-card{grid-template-columns:1fr; padding:14px;}
+      .timer-display{text-align:center;}
+      .timer-copy{text-align:center;}
+    }
+
   </style>
 </head>
 <body data-view="auto" data-page="operation" data-session="out" data-app-role="SIN_SESION">
@@ -895,7 +933,7 @@
                 <div class="field col-3 primary-input"><label for="tipoPedido">Tipo de pedido *</label><select id="tipoPedido" required><option value="">Seleccione</option><option value="VENTAS">Ventas</option><option value="ALUMBRADO">Alumbrado</option></select></div>
                 <div class="field col-3 primary-input"><label for="pedido">Pedido / requerimiento</label><input id="pedido" placeholder="Número de pedido si aplica" /></div>
                 <div class="field col-3 primary-input"><label for="referencia">Cable / referencia *</label><input id="referencia" required placeholder="Referencia o descripción del cable" /></div>
-                <div class="field col-3 primary-input"><label for="metrosSolicitados">Metros a cortar *</label><input type="number" min="0" step="0.01" id="metrosSolicitados" required placeholder="0" /></div>
+                <div class="field col-3 primary-input"><label for="metrosSolicitados">Metros a cortar *</label><input type="text" inputmode="decimal" id="metrosSolicitados" required placeholder="Ej. 500 o 499,99" /></div>
               </div>
             </fieldset>
 
@@ -903,7 +941,7 @@
               <legend>Carrete y sobrante</legend>
               <div class="form-grid">
                 <div class="field col-4 primary-input"><label for="carreteLote">Carrete / lote *</label><input id="carreteLote" required placeholder="ID del carrete o lote" /></div>
-                <div class="field col-4 primary-input"><label for="disponibleAntes">Metros disponibles en carrete *</label><input type="number" min="0" step="0.01" id="disponibleAntes" required placeholder="0" /></div>
+                <div class="field col-4 primary-input"><label for="disponibleAntes">Metros disponibles en carrete *</label><input type="text" inputmode="decimal" id="disponibleAntes" required placeholder="Ej. 550 o 499,99" /></div>
                 <div class="field col-2 readonly-result"><label for="remanenteProyectado">Sobrante</label><input id="remanenteProyectado" class="readonly" readonly /></div>
                 <div class="field col-2 readonly-result"><label for="restriccionRemanente">Condición</label><input id="restriccionRemanente" class="readonly" readonly /></div>
               </div>
@@ -935,13 +973,17 @@
               <legend>Medición del corte</legend>
               <div class="cut-lock-note" id="cutLockNote"><span class="icon">🔒</span><div>El corte se desbloquea cuando no requiere aprobación o cuando la solicitud queda aprobada.</div></div>
               <div class="form-grid">
+                <div class="live-timer-card" id="liveTimerCard">
+                  <div class="timer-display" id="liveTimerDisplay">00:00:00</div>
+                  <div class="timer-copy" id="liveTimerText"><strong>Tiempo real del corte</strong><span>Presione Iniciar corte para comenzar el cronómetro. Al finalizar, se habilita el registro final.</span></div>
+                </div>
                 <div class="field col-3"><label for="fechaCorte">Fecha corte</label><input type="date" id="fechaCorte" readonly /></div>
                 <div class="field col-3"><label for="horaInicio">Hora inicio</label><input type="time" id="horaInicio" readonly /></div>
                 <div class="field col-3"><label for="horaFin">Hora final</label><input type="time" id="horaFin" readonly /></div>
                 <div class="field col-3 readonly-result"><label for="duracionCorte">Duración</label><input id="duracionCorte" class="readonly" readonly placeholder="--" /></div>
-                <div class="field col-3"><label for="metrajeFinal">Metraje final</label><input type="number" min="0" step="0.01" id="metrajeFinal" placeholder="0" /></div>
-                <div class="field col-3"><label for="remanenteReal">Sobrante real</label><input type="number" min="0" step="0.01" id="remanenteReal" placeholder="0" /></div>
-                <div class="field col-6"><label>Acciones de tiempo</label><div class="time-actions"><button type="button" class="btn-green" id="btnStartCut">Iniciar corte</button><button type="button" class="btn-orange" id="btnEndCut">Finalizar corte</button></div><div class="action-hint">Use estos botones para medir la duración real del corte.</div></div>
+                <div class="field col-3"><label for="metrajeFinal">Metraje final</label><input type="text" inputmode="decimal" id="metrajeFinal" placeholder="0" readonly /></div>
+                <div class="field col-3"><label for="remanenteReal">Sobrante real</label><input type="text" inputmode="decimal" id="remanenteReal" placeholder="0" readonly /></div>
+                <div class="field col-6"><label>Acciones de tiempo</label><div class="time-actions"><button type="button" class="btn-green" id="btnStartCut">Iniciar corte</button><button type="button" class="btn-orange" id="btnEndCut">Finalizar corte</button></div><div class="action-hint">Presione Iniciar para activar el cronómetro. Presione Finalizar para detenerlo y registrar el resultado.</div></div>
                 <div class="col-12 checks">
                   <label class="check-card"><input type="checkbox" id="corteUniforme" checked /> Corte uniforme</label>
                   <label class="check-card"><input type="checkbox" id="tramoRotulado" checked /> Tramo rotulado</label>
@@ -1109,6 +1151,10 @@
     let lastExportFile = null;
     let franjaManual = false;
     let submitIntent = 'record';
+    let liveCutTimerInterval = null;
+    let liveCutStartMs = null;
+    let cutIsRunning = false;
+    let cutIsFinished = false;
 
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyAE1v79wks-WHFqPXJBXni8f3WhnEX__ww",
@@ -1204,7 +1250,23 @@
 
     const $ = (id)=>document.getElementById(id);
     const val = (id)=>($(id)?.value || '').trim();
-    const num = (id)=>parseFloat(String(val(id)).replace(',','.')) || 0;
+    function parseDecimal(value){
+      let s = String(value ?? '').trim();
+      if(!s) return NaN;
+      s = s.replace(/\s/g,'');
+      const lastComma = s.lastIndexOf(',');
+      const lastDot = s.lastIndexOf('.');
+      if(lastComma >= 0 && lastDot >= 0){
+        // Formato latino: 1.234,56 -> 1234.56. Formato inglés: 1,234.56 -> 1234.56
+        s = lastComma > lastDot ? s.replace(/\./g,'').replace(',', '.') : s.replace(/,/g,'');
+      }else if(lastComma >= 0){
+        s = s.replace(',', '.');
+      }
+      s = s.replace(/[^0-9.-]/g,'');
+      const n = Number(s);
+      return Number.isFinite(n) ? n : NaN;
+    }
+    const num = (id)=>parseDecimal(val(id));
     const yn = (id)=>$(id).checked ? 'SI' : 'NO';
 
     function loadRecords(){
@@ -1215,7 +1277,7 @@
     function pad(n){return String(n).padStart(2,'0')}
     function nowParts(){const d=new Date(); return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`, time:`${pad(d.getHours())}:${pad(d.getMinutes())}`, stamp:`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`}}
     function todayHuman(){const n=nowParts(); return n.date.split('-').reverse().join('/') + ' ' + n.time}
-    function normalizeDecimal(v){ if(v === '' || v === null || v === undefined) return ''; const n = Number(String(v).replace(',','.')); return Number.isFinite(n) ? String(n.toFixed(2)).replace(/\.00$/,'') : String(v); }
+    function normalizeDecimal(v){ if(v === '' || v === null || v === undefined) return ''; const n = parseDecimal(v); return Number.isFinite(n) ? String(n.toFixed(2)).replace(/\.00$/,'').replace('.', ',') : String(v); }
     function cleanText(value){return String(value ?? '').replace(/\s+/g,' ').trim();}
     function escapeHtml(value){return String(value ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));}
 
@@ -1249,7 +1311,7 @@
     function calcRemanent(){
       const disponible = num('disponibleAntes');
       const solicitado = num('metrosSolicitados');
-      const hasValues = Number.isFinite(disponible) && Number.isFinite(solicitado) && (disponible > 0 || solicitado > 0);
+      const hasValues = Number.isFinite(disponible) && Number.isFinite(solicitado) && disponible > 0 && solicitado > 0;
       const rem = hasValues ? +(disponible - solicitado).toFixed(2) : 0;
       $('remanenteProyectado').value = hasValues ? normalizeDecimal(rem) : '';
       if($('remanenteReal')) $('remanenteReal').value = hasValues ? normalizeDecimal(rem) : '';
@@ -1303,7 +1365,7 @@
 
     function selectedRemanent(){
       const raw = $('remanenteProyectado') ? $('remanenteProyectado').value : '';
-      const n = Number(String(raw).replace(',','.'));
+      const n = parseDecimal(raw);
       return Number.isFinite(n) ? n : NaN;
     }
     function approvalRequiredNow(){
@@ -1322,6 +1384,70 @@
       fieldset.disabled = !!disabled;
       fieldset.classList.toggle('disabled-section', !!disabled);
     }
+
+    function formatTimer(ms){
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+    function timeWithSeconds(date=new Date()){
+      return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+    function parseTimeToSeconds(t){
+      if(!t) return NaN;
+      const parts = String(t).split(':').map(Number);
+      if(parts.length < 2 || parts.some(x=>!Number.isFinite(x))) return NaN;
+      return (parts[0]*3600) + (parts[1]*60) + (parts[2] || 0);
+    }
+    function stopLiveTimer(){
+      if(liveCutTimerInterval){ clearInterval(liveCutTimerInterval); liveCutTimerInterval = null; }
+      cutIsRunning = false;
+      document.body.classList.remove('cut-running');
+    }
+    function resetLiveTimer(){
+      stopLiveTimer();
+      liveCutStartMs = null;
+      cutIsFinished = false;
+      if($('liveTimerDisplay')) $('liveTimerDisplay').textContent = '00:00:00';
+      if($('liveTimerText')) $('liveTimerText').innerHTML = '<strong>Tiempo real del corte</strong><span>Presione Iniciar corte para comenzar el cronómetro. Al finalizar, se habilita el registro final.</span>';
+      setFinalFieldsEnabled(false);
+      updateTimeButtons();
+    }
+    function setFinalFieldsEnabled(enabled){
+      ['metrajeFinal','remanenteReal'].forEach(id=>{
+        if($(id)){
+          $(id).readOnly = !enabled;
+          $(id).closest('.field')?.classList.toggle('final-fields-locked', !enabled);
+        }
+      });
+      ['corteUniforme','tramoRotulado','evidenciaRegistro'].forEach(id=>{ if($(id)) $(id).disabled = !enabled; });
+    }
+    function updateTimeButtons(){
+      const unlocked = cutUnlocked();
+      const start = $('btnStartCut');
+      const end = $('btnEndCut');
+      const save = $('btnSaveRecord');
+      if(start) start.disabled = !unlocked || cutIsRunning || cutIsFinished;
+      if(end) end.disabled = !unlocked || !cutIsRunning;
+      if(save && submitIntent !== 'approval'){
+        const requires = approvalRequiredNow();
+        const approved = currentFormApproved();
+        const approvalBlocked = requires && !approved;
+        save.disabled = approvalBlocked || cutIsRunning || (unlocked && !cutIsFinished);
+        if(cutIsRunning) save.textContent = 'Cronómetro en curso';
+        else if(unlocked && !cutIsFinished) save.textContent = 'Inicie y finalice el corte';
+        else save.textContent = approved ? 'Guardar corte aprobado' : 'Guardar corte';
+      }
+    }
+    function tickLiveTimer(){
+      if(!liveCutStartMs || !$('liveTimerDisplay')) return;
+      const elapsed = Date.now() - liveCutStartMs;
+      $('liveTimerDisplay').textContent = formatTimer(elapsed);
+      $('duracionCorte').value = formatTimer(elapsed);
+    }
+
     function updateCutWorkflow(){
       const rem = selectedRemanent();
       const hasRem = Number.isFinite(rem);
@@ -1334,62 +1460,81 @@
       const saveBtn = $('btnSaveRecord');
       setFieldsetDisabled(measure, !unlocked);
       if(sendBtn) sendBtn.hidden = !(requires && !approved);
-      if(saveBtn){
-        saveBtn.disabled = requires && !approved;
-        saveBtn.textContent = approved ? 'Guardar corte aprobado' : 'Guardar corte';
-      }
       if(lock){
         if(!hasRem) lock.innerHTML = '<span class="icon">🔒</span><div>Ingrese metros y carrete para habilitar el corte.</div>';
         else if(requires && !approved) lock.innerHTML = '<span class="icon">⏳</span><div><strong>Corte bloqueado.</strong><br>Envíe la aprobación y espere respuesta antes de iniciar el corte.</div>';
-        else if(approved) lock.innerHTML = '<span class="icon">✅</span><div><strong>Aprobación recibida.</strong><br>Ya puede iniciar el corte y registrar las horas.</div>';
-        else lock.innerHTML = '<span class="icon">✅</span><div><strong>Corte habilitado.</strong><br>Registre hora de inicio, hora final y validación del tramo.</div>';
+        else if(approved) lock.innerHTML = '<span class="icon">✅</span><div><strong>Aprobación recibida.</strong><br>Presione <strong>Iniciar corte</strong> para activar el cronómetro y <strong>Finalizar corte</strong> para cerrarlo.</div>';
+        else lock.innerHTML = '<span class="icon">✅</span><div><strong>Corte habilitado.</strong><br>Presione <strong>Iniciar corte</strong> para medir el tiempo real del corte.</div>';
       }
-      if(!unlocked && requires && !approved){
+      if(!unlocked){
+        resetLiveTimer();
         if($('fechaCorte')) $('fechaCorte').value = '';
         if($('horaInicio')) $('horaInicio').value = '';
         if($('horaFin')) $('horaFin').value = '';
         if($('metrajeFinal')) $('metrajeFinal').value = '';
+        if($('remanenteReal')) $('remanenteReal').value = '';
         if($('duracionCorte')) $('duracionCorte').value = '--';
+      }else{
+        if(!cutIsRunning && !cutIsFinished){
+          setFinalFieldsEnabled(false);
+          if($('duracionCorte') && !val('horaInicio') && !val('horaFin')) $('duracionCorte').value = '--';
+        }
       }
-      if(unlocked && $('metrajeFinal') && !$('metrajeFinal').value && val('metrosSolicitados')) $('metrajeFinal').value = val('metrosSolicitados');
-      if(unlocked && $('remanenteReal') && !$('remanenteReal').value && $('remanenteProyectado')) $('remanenteReal').value = $('remanenteProyectado').value;
       updateDuration();
+      updateTimeButtons();
     }
     function updateDuration(){
       if(!$('duracionCorte')) return;
+      if(cutIsRunning && liveCutStartMs){ tickLiveTimer(); return; }
       const ini = val('horaInicio'); const fin = val('horaFin');
       if(!ini || !fin){ $('duracionCorte').value='--'; return; }
-      const [h1,m1]=ini.split(':').map(Number); const [h2,m2]=fin.split(':').map(Number);
-      if(!Number.isFinite(h1)||!Number.isFinite(h2)){ $('duracionCorte').value='--'; return; }
-      let mins=(h2*60+m2)-(h1*60+m1); if(mins<0) mins+=24*60;
-      const h=Math.floor(mins/60), m=mins%60;
-      $('duracionCorte').value = h ? `${h} h ${m} min` : `${m} min`;
+      const s1 = parseTimeToSeconds(ini); const s2 = parseTimeToSeconds(fin);
+      if(!Number.isFinite(s1)||!Number.isFinite(s2)){ $('duracionCorte').value='--'; return; }
+      let secs=s2-s1; if(secs<0) secs+=24*3600;
+      $('duracionCorte').value = formatTimer(secs*1000);
+      if($('liveTimerDisplay')) $('liveTimerDisplay').textContent = formatTimer(secs*1000);
     }
     function startCutTime(){
       if(!cutUnlocked()) return toast('El corte aún está bloqueado por aprobación.', 'error');
-      const n=nowParts();
-      $('fechaCorte').value = n.date;
-      $('horaInicio').value = n.time;
+      if(cutIsRunning) return toast('El cronómetro ya está en curso.', 'click');
+      if(cutIsFinished && val('horaFin')) return toast('Este corte ya fue finalizado. Guarde el registro o limpie el formulario.', 'error');
+      const now = new Date();
+      $('fechaCorte').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+      $('horaInicio').value = timeWithSeconds(now);
       $('horaFin').value = '';
-      $('metrajeFinal').value = val('metrosSolicitados');
-      $('remanenteReal').value = $('remanenteProyectado').value;
-      updateDuration();
-      toast('Hora de inicio registrada', 'ok');
+      $('metrajeFinal').value = '';
+      $('remanenteReal').value = '';
+      liveCutStartMs = now.getTime();
+      cutIsRunning = true;
+      cutIsFinished = false;
+      setFinalFieldsEnabled(false);
+      document.body.classList.add('cut-running');
+      if($('liveTimerText')) $('liveTimerText').innerHTML = '<strong>Cronómetro activo</strong><span>El tiempo se está midiendo. Presione Finalizar corte cuando termine físicamente el corte.</span>';
+      tickLiveTimer();
+      liveCutTimerInterval = setInterval(tickLiveTimer, 1000);
+      updateTimeButtons();
+      toast('Cronómetro iniciado', 'ok');
     }
     function endCutTime(){
       if(!cutUnlocked()) return toast('El corte aún está bloqueado por aprobación.', 'error');
-      if(!val('horaInicio')) startCutTime();
-      const n=nowParts();
-      $('horaFin').value = n.time;
-      if(!$('fechaCorte').value) $('fechaCorte').value = n.date;
-      $('metrajeFinal').value = val('metrosSolicitados');
-      $('remanenteReal').value = $('remanenteProyectado').value;
+      if(!cutIsRunning || !val('horaInicio')) return toast('Primero debe presionar Iniciar corte.', 'error');
+      const now = new Date();
+      $('horaFin').value = timeWithSeconds(now);
+      if(!$('fechaCorte').value) $('fechaCorte').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+      stopLiveTimer();
+      cutIsFinished = true;
+      if(!$('metrajeFinal').value) $('metrajeFinal').value = val('metrosSolicitados');
+      if(!$('remanenteReal').value) $('remanenteReal').value = $('remanenteProyectado').value;
       $('corteUniforme').checked = true;
       $('tramoRotulado').checked = true;
       $('evidenciaRegistro').checked = true;
+      setFinalFieldsEnabled(true);
       updateDuration();
       updateStatusPanel();
-      toast('Hora final registrada', 'ok');
+      updateTimeButtons();
+      if($('liveTimerText')) $('liveTimerText').innerHTML = '<strong>Corte finalizado</strong><span>Revise el metraje final y el sobrante real. Luego presione Guardar corte.</span>';
+      toast('Cronómetro detenido. Complete y guarde el corte.', 'ok');
+      $('metrajeFinal')?.focus();
     }
 
     function setSegmentValue(id, value, manual=false){
@@ -1409,7 +1554,7 @@
       if(franjaManual && !force) return;
       const h = val('horaSolicitud');
       if(!h) return;
-      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const rem = parseDecimal($('remanenteProyectado').value);
       const authorized = val('autorizadoMenor50') === 'SI';
       let nextValue = h <= '11:00' ? 'MISMO_DIA_TARDE' : 'DIA_HABIL_SIGUIENTE_MANANA';
       if(Number.isFinite(rem) && rem < 50 && !authorized) nextValue = 'SUSPENDIDO_NOVEDAD_AUTORIZACION';
@@ -1417,7 +1562,7 @@
     }
 
     function computeStatusFromForm(){
-      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const rem = parseDecimal($('remanenteProyectado').value);
       const authorized = val('autorizadoMenor50') === 'SI';
       const hasAuthData = authorized && val('autorizadoPor') && val('motivoAutorizacion');
       const qualityOk = $('corteUniforme').checked && $('tramoRotulado').checked && $('evidenciaRegistro').checked;
@@ -1445,10 +1590,10 @@
     function collectRecord(){
       const status = computeStatusFromForm();
       const n=nowParts();
-      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const rem = parseDecimal($('remanenteProyectado').value);
       const metrajeFinal = num('metrajeFinal');
       const remRealRaw = val('remanenteReal');
-      const remReal = remRealRaw ? parseFloat(remRealRaw.replace(',','.')) : rem;
+      const remReal = remRealRaw ? parseDecimal(remRealRaw) : rem;
       const qualityOk = $('corteUniforme').checked && $('tramoRotulado').checked && $('evidenciaRegistro').checked;
       const operador = operatorName();
       let cumpleRemanente = 'NO';
@@ -1522,7 +1667,7 @@
       if(!$('pedido').value) $('pedido').value = 'AUTO-' + nextConsecutive();
       if(!$('evidenciaTexto').value) $('evidenciaTexto').value = 'Registro digital';
       if($('observacion')) $('observacion').value = val('motivoAutorizacion');
-      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const rem = parseDecimal($('remanenteProyectado').value);
       if(cutUnlocked()){
         if(!$('fechaCorte').value) $('fechaCorte').value = n.date;
         if(!$('metrajeFinal').value) $('metrajeFinal').value = val('metrosSolicitados');
@@ -1546,7 +1691,7 @@
       calcRemanent();
       applyQuickDefaultsBeforeSave();
       if(!operatorName()){ toast('No se identificó el responsable del corte. Cierre sesión e ingrese nuevamente.', 'error'); return false; }
-      const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
+      const rem = parseDecimal($('remanenteProyectado').value);
       const approvalNeeded = Number.isFinite(rem) && rem <= 50;
       const approved = currentFormApproved();
       const required = ['tipoPedido','referencia','metrosSolicitados','carreteLote','disponibleAntes'];
@@ -1558,14 +1703,22 @@
           $(id).focus(); toast('Falta completar: ' + label, 'error'); return false;
         }
       }
-      if(num('metrosSolicitados') <= 0){ toast('Los metros a cortar deben ser mayores a cero.', 'error'); return false; }
-      if(num('metrosSolicitados') > num('disponibleAntes')){ toast('Los metros a cortar no pueden superar el metraje disponible.', 'error'); return false; }
+      const metrosSolicitadosNum = num('metrosSolicitados');
+      const disponibleAntesNum = num('disponibleAntes');
+      if(!Number.isFinite(metrosSolicitadosNum) || metrosSolicitadosNum <= 0){ toast('Los metros a cortar deben ser mayores a cero.', 'error'); return false; }
+      if(!Number.isFinite(disponibleAntesNum) || disponibleAntesNum <= 0){ toast('Los metros disponibles deben ser mayores a cero.', 'error'); return false; }
+      if(metrosSolicitadosNum > disponibleAntesNum){ toast('Los metros a cortar no pueden superar el metraje disponible.', 'error'); return false; }
       if(approvalNeeded && submitIntent !== 'approval' && !approved){ toast('Este corte requiere aprobación. Use Enviar aprobación y espere respuesta.', 'error'); return false; }
+      if(submitIntent !== 'approval'){
+        if(cutIsRunning){ toast('El cronómetro está corriendo. Primero finalice el corte.', 'error'); return false; }
+        if(cutUnlocked() && !cutIsFinished && (!val('horaInicio') || !val('horaFin'))){ toast('Debe presionar Iniciar corte y luego Finalizar corte antes de guardar.', 'error'); return false; }
+      }
       if(!approvalNeeded && submitIntent === 'approval'){ toast('Este corte no requiere aprobación. Puede registrar el corte.', 'click'); return false; }
       return true;
     }
 
     function clearForm(full=false){
+      resetLiveTimer();
       $('cutForm').reset();
       submitIntent='record';
       ['registroId','consecutivoActual','aprobacionTipoActual','aprobacionEstadoActual','aprobadoPorActual','fechaAprobacionActual','duracionCorte'].forEach(id=>{ if($(id)) $(id).value=''; });
@@ -1836,7 +1989,7 @@
       $('fechaSolicitud').value=r.FECHA_SOLICITUD||''; $('horaSolicitud').value=r.HORA_SOLICITUD||''; $('pedido').value=r.PEDIDO_REQUERIMIENTO||''; if($('tipoPedido')) $('tipoPedido').value=r.TIPO_PEDIDO||''; $('clienteProceso').value=r.CLIENTE_PROCESO||'Logística';
       $('referencia').value=r.REFERENCIA_CABLE||''; $('calibre').value=r.CALIBRE||''; $('tipoCable').value=r.TIPO_CABLE||''; $('colorCable').value=r.COLOR||''; $('metrosSolicitados').value=r.METROS_SOLICITADOS||''; $('ubicacionProducto').value=r.UBICACION_PRODUCTO||'';
       $('carreteLote').value=r.CARRETE_LOTE||''; $('disponibleAntes').value=r.METROS_DISPONIBLES_ANTES||''; $('autorizadoMenor50').value=r.AUTORIZADO_MENOR_50||'NO'; $('autorizadoPor').value=r.AUTORIZADO_POR||''; $('motivoAutorizacion').value=r.MOTIVO_AUTORIZACION||'';
-      $('fechaCorte').value=r.FECHA_CORTE||''; $('horaInicio').value=r.HORA_INICIO||''; $('horaFin').value=r.HORA_FIN||''; $('metrajeFinal').value=r.METRAJE_FINAL||''; $('remanenteReal').value=r.REMANENTE_REAL||''; $('evidenciaTexto').value=r.EVIDENCIA_DESCRIPCION||'Registro digital';
+      $('fechaCorte').value=r.FECHA_CORTE||''; $('horaInicio').value=r.HORA_INICIO||''; $('horaFin').value=r.HORA_FIN||''; $('metrajeFinal').value=r.METRAJE_FINAL||''; $('remanenteReal').value=r.REMANENTE_REAL||''; cutIsFinished = !!(r.HORA_INICIO && r.HORA_FIN); setFinalFieldsEnabled(cutIsFinished); $('evidenciaTexto').value=r.EVIDENCIA_DESCRIPCION||'Registro digital';
       $('corteUniforme').checked=r.CORTE_UNIFORME==='SI' || !r.CORTE_UNIFORME; $('tramoRotulado').checked=r.TRAMO_ROTULADO==='SI' || !r.TRAMO_ROTULADO; $('evidenciaRegistro').checked=r.EVIDENCIA_REGISTRO==='SI' || !r.EVIDENCIA_REGISTRO;
       franjaManual = true; setSegmentValue('franjaAtencion', r.FRANJA_ATENCION||'MISMO_DIA_TARDE', false); $('cumpleTiempo').value=r.CUMPLE_TIEMPO||'PENDIENTE'; $('responsableChequeo').value=r.RESPONSABLE_CHEQUEO||''; $('responsableCorte').value=r.RESPONSABLE_CORTE||operatorName(); $('novedad').value=r.NOVEDAD||'SIN_NOVEDAD'; $('observacion').value=r.OBSERVACION||'';
       calcRemanent(); updateCutWorkflow(); updateStatusPanel(); renderAll(); window.scrollTo({top:0, behavior:'smooth'}); toast('Aprobación cargada. Registre inicio y final del corte.', 'ok');
@@ -2551,6 +2704,7 @@ Quedo atento(a) a la validación correspondiente.`;
       catch(e){toast('No fue posible actualizar el rol.', 'error');}
     }
 
+    window.addEventListener('beforeunload', (e)=>{ if(cutIsRunning){ e.preventDefault(); e.returnValue=''; } });
     document.addEventListener('click', (e)=>{ if(e.target.matches('button')) beep('click'); });
     document.querySelectorAll('[data-view-btn]').forEach(btn=>btn.addEventListener('click', ()=>setView(btn.dataset.viewBtn)));
     document.querySelectorAll('[data-export]').forEach(btn=>btn.addEventListener('click', ()=>exportRecords(btn.dataset.export)));
