@@ -1062,7 +1062,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const VERSION = '3.8.2-FIREBASE-LOCK';
+    const VERSION = '3.8.3-FIREBASE-FIX';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -1083,6 +1083,8 @@
     };
     const ADMIN_EMAILS = ['j.perez@ei.com.co'];
     let firebaseReady = false;
+    let firebaseInitPromise = null;
+    let firebaseObserverReady = false;
     let currentUser = null;
     let currentProfile = null;
     let cloudRecordsUnsub = null;
