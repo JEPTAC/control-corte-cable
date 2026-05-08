@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-corte-cable-v4-2-drive';
+const CACHE_NAME = 'control-corte-cable-v4-3-ios';
 const ASSETS = ['./manifest.json','./icon-192.png','./icon-512.png','./logo-electroingenieria.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => caches.open(CACHE_NAME)).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
