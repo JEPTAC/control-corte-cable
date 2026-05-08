@@ -622,6 +622,10 @@
     body[data-session="out"] .login-required{display:block}
     body[data-session="out"] .main-grid,
     body[data-session="out"] .table-card{display:none !important}
+    body[data-session="out"] .toolbar,
+    body[data-session="out"] .app-menu,
+    body[data-session="out"] .analytics-section{display:none !important}
+    body[data-session="out"] .cloud-card{display:block !important}
     .lock-message{display:flex; gap:12px; align-items:flex-start; color:var(--navy); font-weight:800; line-height:1.45}
     .lock-message .icon{flex:0 0 auto; width:38px; height:38px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg,var(--teal),var(--navy)); color:#fff}
     .session-filled input[readonly]{background:#f8fafc; color:var(--navy); font-weight:900; border-style:dashed}
@@ -736,7 +740,7 @@
 
   </style>
 </head>
-<body data-view="auto" data-page="operation">
+<body data-view="auto" data-page="operation" data-session="out" data-app-role="SIN_SESION">
   <div class="app">
     <section class="hero">
       <div class="hero-brand">
@@ -1058,7 +1062,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const VERSION = '3.8.1-FIREBASE-OK';
+    const VERSION = '3.8.2-FIREBASE-LOCK';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -2153,31 +2157,56 @@ Quedo atento(a) a la validación correspondiente.`;
       renderUsersPanel();
     }
     async function initFirebase(){
-      if(!isFirebaseConfigured()){
-        updateCloudStatus('Conexión local','warn');
-        setAuthView();
-        return;
-      }
-      try{
-        const appMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
-        const authMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
-        const fsMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
-        const app = appMod.initializeApp(FIREBASE_CONFIG);
-        fb = {...authMod, ...fsMod, app, appMod, authMod, initializeSecondaryApp: appMod.initializeApp, deleteApp: appMod.deleteApp, auth:authMod.getAuth(app), db:fsMod.getFirestore(app)};
-        firebaseReady = true;
-        updateCloudStatus('Nube disponible','ok');
-        fb.onAuthStateChanged(fb.auth, async user=>{
-          currentUser = user;
-          if(user){ await ensureUserProfile(user); subscribeCloudRecords(); if(isRole('GERENCIA')) subscribeUsers(); }
-          else { currentProfile=null; if(cloudRecordsUnsub) cloudRecordsUnsub(); if(cloudUsersUnsub) cloudUsersUnsub(); if(cloudPreUsersUnsub) cloudPreUsersUnsub(); updateCloudStatus('Nube disponible','ok'); }
+      if(firebaseReady) return true;
+      if(firebaseInitPromise) return firebaseInitPromise;
+      firebaseInitPromise = (async()=>{
+        if(!isFirebaseConfigured()){
+          firebaseReady = false;
+          updateCloudStatus('Configurar Firebase','warn');
           setAuthView();
-        });
-      }catch(err){
-        firebaseReady = false;
-        updateCloudStatus('Sin conexión nube','warn');
-        const msg = err && err.message ? err.message : 'No fue posible iniciar Firebase.';
-        showSharePanel('<strong>No se conectó a la nube.</strong><br>Revise conexión a internet, reglas de Firebase o que GitHub haya publicado la última versión.<br><small>'+escapeHtml(msg)+'</small>');
-      }
+          showSharePanel('<strong>Firebase no está configurado.</strong><br>Revise que el objeto FIREBASE_CONFIG tenga apiKey, authDomain, projectId, storageBucket, messagingSenderId y appId.');
+          firebaseInitPromise = null;
+          return false;
+        }
+        updateCloudStatus('Conectando nube','warn');
+        try{
+          const appMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+          const authMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+          const fsMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+          let app;
+          try{ app = appMod.getApp ? appMod.getApp() : null; }
+          catch(_e){ app = null; }
+          if(!app) app = appMod.initializeApp(FIREBASE_CONFIG);
+          fb = {...authMod, ...fsMod, app, appMod, authMod, initializeSecondaryApp: appMod.initializeApp, deleteApp: appMod.deleteApp, auth:authMod.getAuth(app), db:fsMod.getFirestore(app)};
+          firebaseReady = true;
+          updateCloudStatus('Nube disponible','ok');
+          if(!firebaseObserverReady){
+            firebaseObserverReady = true;
+            fb.onAuthStateChanged(fb.auth, async user=>{
+              currentUser = user;
+              if(user){ await ensureUserProfile(user); subscribeCloudRecords(); if(isRole('GERENCIA')) subscribeUsers(); }
+              else { currentProfile=null; if(cloudRecordsUnsub) cloudRecordsUnsub(); if(cloudUsersUnsub) cloudUsersUnsub(); if(cloudPreUsersUnsub) cloudPreUsersUnsub(); updateCloudStatus('Nube disponible','ok'); }
+              setAuthView();
+            });
+          }
+          setAuthView();
+          return true;
+        }catch(err){
+          firebaseReady = false;
+          firebaseInitPromise = null;
+          updateCloudStatus('Sin conexión nube','warn');
+          const msg = err && err.message ? err.message : 'No fue posible iniciar Firebase.';
+          showSharePanel('<strong>No se conectó a Firebase.</strong><br>Verifique internet, que el dominio de GitHub Pages esté autorizado en Firebase Authentication y que se haya publicado la última versión.<br><small>'+escapeHtml(msg)+'</small>');
+          setAuthView();
+          return false;
+        }
+      })();
+      return firebaseInitPromise;
+    }
+    async function ensureFirebaseReady(){
+      if(firebaseReady) return true;
+      const ok = await initFirebase();
+      return !!ok && firebaseReady;
     }
     async function getPreapprovedUser(email){
       try{
@@ -2212,12 +2241,12 @@ Quedo atento(a) a la validación correspondiente.`;
       syncOperatorFields();
     }
     async function loginFirebase(){
-      if(!firebaseReady){toast('La conexión en nube no está configurada.', 'error'); return;}
+      if(!await ensureFirebaseReady()){toast('No hay conexión con Firebase. Revise la publicación o el dominio autorizado.', 'error'); return;}
       try{ await fb.signInWithEmailAndPassword(fb.auth, val('authEmail'), val('authPassword')); toast('Ingreso correcto','ok'); }
       catch(err){ toast('No fue posible ingresar. Revise correo y clave.', 'error'); }
     }
     async function registerFirebaseUser(){
-      if(!firebaseReady){toast('La conexión en nube no está configurada.', 'error'); return;}
+      if(!await ensureFirebaseReady()){toast('No hay conexión con Firebase. Revise la publicación o el dominio autorizado.', 'error'); return;}
       if(!val('authEmail') || !val('authPassword')){toast('Complete correo y clave.', 'error'); return;}
       try{
         const cred = await fb.createUserWithEmailAndPassword(fb.auth, val('authEmail'), val('authPassword'));
