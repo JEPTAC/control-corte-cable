@@ -1058,7 +1058,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const VERSION = '3.8.0-PRODUCTIVIDAD';
+    const VERSION = '3.8.1-FIREBASE-OK';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -2174,8 +2174,9 @@ Quedo atento(a) a la validación correspondiente.`;
         });
       }catch(err){
         firebaseReady = false;
-        updateCloudStatus('Conexión local','warn');
-        showSharePanel('<strong>Conexión local activa.</strong><br>Los registros se guardan en este dispositivo y pueden exportarse en Excel.');
+        updateCloudStatus('Sin conexión nube','warn');
+        const msg = err && err.message ? err.message : 'No fue posible iniciar Firebase.';
+        showSharePanel('<strong>No se conectó a la nube.</strong><br>Revise conexión a internet, reglas de Firebase o que GitHub haya publicado la última versión.<br><small>'+escapeHtml(msg)+'</small>');
       }
     }
     async function getPreapprovedUser(email){
