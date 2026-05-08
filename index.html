@@ -675,9 +675,68 @@
     .operator-approved-item strong{color:var(--navy)}
     .action-hint{font-size:.86rem;color:var(--muted);line-height:1.35;margin-top:6px}
 
+
+
+    /* v3.8 - limpieza operativa, exportación por rol y analítica */
+    .app-menu{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:12px 0 16px;
+      padding:10px;
+      border:1px solid rgba(215,224,236,.9);
+      border-radius:20px;
+      background:rgba(255,255,255,.72);
+      box-shadow:var(--shadow-soft);
+    }
+    .app-menu button{flex:0 0 auto; min-width:140px}
+    .page-active{background:linear-gradient(135deg,var(--teal),var(--navy)) !important; color:#fff !important; border-color:transparent !important}
+    body[data-page="analytics"] .main-grid,
+    body[data-page="analytics"] .table-card{display:none !important}
+    body[data-page="operation"] .analytics-section{display:none !important}
+    body[data-app-role="OPERARIO"] .analytics-only,
+    body[data-app-role="PENDIENTE"] .analytics-only,
+    body[data-app-role="SIN_SESION"] .analytics-only{display:none !important}
+    body[data-app-role="OPERARIO"] .dashboard-card,
+    body[data-app-role="OPERARIO"] .table-card{display:none !important}
+    body[data-app-role="OPERARIO"] .main-grid{grid-template-columns:1fr}
+    body:not([data-app-role="LIDER_LOGISTICO"]) .leader-export-only{display:none !important}
+    .legacy-chart{display:none !important}
+    .toolbar{position:static !important; top:auto !important; z-index:auto !important; backdrop-filter:none !important}
+    .operator-simple textarea{min-height:140px; resize:vertical; line-height:1.42}
+    .operator-simple .field{min-width:0}
+    .operator-simple input,
+    .operator-simple textarea,
+    .operator-simple select{font-size:16px}
+    .field.expanded{grid-column:auto !important}
+    .field.expanded input,.field.expanded textarea{box-shadow:none !important}
+    .exports-minimal{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+    .export-role-note{margin-top:10px; color:var(--muted); font-weight:800; font-size:.85rem; line-height:1.35}
+    .analytics-section{margin-top:18px}
+    .analytics-filter-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end;margin-bottom:14px}
+    .analytics-filter-grid .field{grid-column:span 3}
+    .analytics-filter-grid .field.search-wide{grid-column:span 4}
+    .analytics-filter-grid .actions{grid-column:span 2;display:flex;gap:8px;flex-wrap:wrap}
+    .analytics-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:14px 0}
+    .analytics-kpi{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:15px;box-shadow:0 8px 20px rgba(11,42,91,.06)}
+    .analytics-kpi .num{font-size:1.75rem;font-weight:1000;color:var(--navy);line-height:1}
+    .analytics-kpi .txt{font-size:.76rem;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-top:7px;line-height:1.25}
+    .analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .analytics-chart{border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;min-height:220px;box-shadow:0 8px 20px rgba(11,42,91,.05)}
+    .analytics-chart.full{grid-column:1/-1}
+    .analytics-chart h3{margin:0 0 12px;color:var(--navy);font-size:1rem;text-transform:uppercase;letter-spacing:.03em}
+    .analytics-chart .bar-row{grid-template-columns:170px 1fr 70px;margin:10px 0}
+    .analytics-comment{border:1px solid #bfdbfe;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#ffffff);padding:15px;color:var(--navy);font-weight:800;line-height:1.48;margin:12px 0}
+    .analytics-comment ul{margin:8px 0 0 18px;padding:0}
+    .mini-table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px}
+    .mini-table th,.mini-table td{font-size:.82rem;padding:9px;border-bottom:1px solid var(--line-2);vertical-align:top}
+    .mini-table th{position:sticky;top:0;background:#f8fafc;color:var(--navy);font-weight:1000;text-transform:uppercase;letter-spacing:.03em}
+    @media(max-width:1050px){.analytics-kpis{grid-template-columns:repeat(3,1fr)}.analytics-grid{grid-template-columns:1fr}.analytics-filter-grid .field,.analytics-filter-grid .field.search-wide,.analytics-filter-grid .actions{grid-column:span 6}}
+    @media(max-width:760px){.app-menu{display:grid;grid-template-columns:1fr;gap:8px}.app-menu button{width:100%}.analytics-kpis{grid-template-columns:repeat(2,1fr)}.analytics-filter-grid{grid-template-columns:1fr}.analytics-filter-grid .field,.analytics-filter-grid .field.search-wide,.analytics-filter-grid .actions{grid-column:span 1}.analytics-filter-grid .actions button{flex:1 1 100%}.analytics-chart .bar-row{grid-template-columns:110px 1fr 48px}.operator-simple textarea{min-height:170px}.exports-minimal{grid-template-columns:1fr !important}}
+
   </style>
 </head>
-<body data-view="auto">
+<body data-view="auto" data-page="operation">
   <div class="app">
     <section class="hero">
       <div class="hero-brand">
@@ -766,9 +825,14 @@
         <button type="button" class="btn-small" data-view-btn="desktop">Escritorio</button>
       </div>
       <div class="toolbar-group">
-        <button type="button" class="btn-small" id="btnRefresh">Actualizar vista y diseño</button>
-        <button type="button" class="btn-small" id="btnToday">Fecha y hora actual</button>
+        <button type="button" class="btn-small" id="btnRefresh">Actualizar vista</button>
+        <button type="button" class="btn-small operator-only" id="btnToday">Fecha y hora actual</button>
       </div>
+    </div>
+
+    <div class="app-menu analytics-only" id="appMenu">
+      <button type="button" class="page-active" data-page-btn="operation">Operación</button>
+      <button type="button" data-page-btn="analytics">Gráficas</button>
     </div>
 
     <div class="main-grid">
@@ -890,7 +954,7 @@
           <div class="role-operational-note" id="roleOperationalNote"><span class="icon">📊</span><div>Panel de seguimiento activo. Este rol no registra cortes; solo consulta indicadores, revisa solicitudes pendientes y gestiona permisos según autorización.</div></div>
           <div class="dashboard-grid" id="kpiGrid"></div>
 
-          <div class="chart-card">
+          <div class="chart-card legacy-chart">
             <p class="chart-title">Cumplimiento general</p>
             <div class="donut-wrap">
               <svg class="donut" viewBox="0 0 120 120" role="img" aria-label="Porcentaje de cumplimiento">
@@ -903,32 +967,19 @@
             </div>
           </div>
 
-          <div class="chart-card">
+          <div class="chart-card legacy-chart">
             <p class="chart-title">Distribución por estado</p>
             <div class="bars" id="statusBars"></div>
           </div>
 
-          <div class="chart-card">
-            <p class="chart-title">Exportar y compartir control</p>
-            <div class="exports">
-              <button type="button" class="btn-green" data-export="xls">Excel .xlsx + correo</button>
-              <button type="button" class="btn-primary" data-export="csv">Plano CSV ;</button>
-              <button type="button" class="btn-orange" data-export="txt">Plano TXT |</button>
-              <button type="button" data-export="json">Respaldo JSON</button>
-              <button type="button" id="btnEmail" class="btn-primary">Compartir último Excel</button>
-              <button type="button" id="btnDeleteAll" class="btn-red admin-action" hidden>Borrar registros</button>
+          <div class="chart-card leader-export-only" id="exportPanel">
+            <p class="chart-title">Exportar control</p>
+            <div class="exports exports-minimal">
+              <button type="button" class="btn-green" data-export="xls">Excel .xlsx</button>
+              <button type="button" class="btn-primary" data-export="txt">Archivo plano TXT |</button>
             </div>
-            <div class="email-config simple-email-config">
-              <div>
-                <label for="emailTo">Correo destino</label>
-                <input id="emailTo" type="email" value="j.perez@ei.com.co" inputmode="email" />
-              </div>
-              <div class="inline-tools">
-                <button type="button" id="btnSaveEmailConfig">Guardar correo</button>
-                <button type="button" id="btnOpenMail" class="btn-orange">Abrir correo con resumen</button>
-              </div>
-            </div>
-            <div class="note clean-note"><strong>Exportación:</strong> el archivo se descarga primero. Si el correo no adjunta el Excel automáticamente, búsquelo en <strong>Descargas</strong> y adjúntelo antes de enviar.</div><div class="share-panel" id="sharePanel"></div>
+            <div class="export-role-note">Exportación disponible solo para Líder Logístico. Los archivos conservan columnas separadas para consolidación y cargue posterior.</div>
+            <div class="share-panel" id="sharePanel"></div>
           </div>
 
           <div class="chart-card cloud-only" id="approvalPanel" hidden>
@@ -955,6 +1006,37 @@
       </aside>
     </div>
 
+
+
+    <section class="card analytics-section analytics-only" id="analyticsSection">
+      <div class="card-header">
+        <div>
+          <h2>Gráficas de productividad</h2>
+          <div class="operator-header-text">Filtre por fecha, responsable, referencia o carrete para revisar rendimiento, horas hombre y trazabilidad del corte.</div>
+        </div>
+        <span class="version-pill" style="color:var(--navy); background:#fff; border-color:var(--line)">Indicadores</span>
+      </div>
+      <div class="card-body">
+        <div class="analytics-filter-grid">
+          <div class="field"><label for="graphDateFrom">Desde</label><input type="date" id="graphDateFrom" /></div>
+          <div class="field"><label for="graphDateTo">Hasta</label><input type="date" id="graphDateTo" /></div>
+          <div class="field search-wide"><label for="graphSearch">Buscar corte específico</label><input id="graphSearch" placeholder="Pedido, carrete, referencia o responsable" /></div>
+          <div class="actions"><button type="button" class="btn-primary" id="btnApplyGraphs">Filtrar</button><button type="button" id="btnClearGraphs">Limpiar</button></div>
+        </div>
+        <div class="analytics-kpis" id="analyticsKpis"></div>
+        <div class="analytics-comment" id="analyticsComment">Seleccione un rango de fechas para ver el análisis.</div>
+        <div class="analytics-grid">
+          <div class="analytics-chart"><h3>Cortes por día</h3><div class="bars" id="graphByDay"></div></div>
+          <div class="analytics-chart"><h3>Estados del proceso</h3><div class="bars" id="graphByStatus"></div></div>
+          <div class="analytics-chart"><h3>Cortes por tipo / referencia</h3><div class="bars" id="graphByType"></div></div>
+          <div class="analytics-chart"><h3>Productividad por responsable</h3><div class="bars" id="graphByPerson"></div></div>
+          <div class="analytics-chart"><h3>Tiempo promedio por tipo</h3><div class="bars" id="graphAvgType"></div></div>
+          <div class="analytics-chart"><h3>Metros procesados por día</h3><div class="bars" id="graphMetersDay"></div></div>
+          <div class="analytics-chart full"><h3>Detalle filtrado</h3><div class="table-scroll" id="analyticsDetail"></div></div>
+        </div>
+      </div>
+    </section>
+
     <section class="card table-card">
       <div class="card-header">
         <h2>Registros acumulados</h2>
@@ -976,7 +1058,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const VERSION = '3.7.0-AVISOS-APROBACION';
+    const VERSION = '3.8.0-PRODUCTIVIDAD';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -1548,7 +1630,107 @@
       listEl.innerHTML = list.map(r=>`<div class="operator-approved-item"><strong>${escapeHtml(r.CONSECUTIVO || '')} · ${escapeHtml(r.REFERENCIA_CABLE || '')}</strong><div class="approval-meta">Carrete ${escapeHtml(r.CARRETE_LOTE||'')} · Cortar ${escapeHtml(r.METROS_SOLICITADOS||'')} m · Sobrante ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Aprobado por: ${escapeHtml(r.APROBADO_POR || '')}</div><div class="approval-actions"><button type="button" class="btn-green" onclick="continueRecord('${r.id}')">Continuar corte</button></div></div>`).join('');
     }
 
-    function renderAll(){renderDashboard(); renderTable(); renderOperatorApprovedList();}
+
+
+    function recordDateForAnalytics(r){return r.FECHA_CORTE || r.FECHA_SOLICITUD || r.FECHA_REGISTRO_SISTEMA || '';}
+    function recordMinutes(r){
+      if(!r.HORA_INICIO || !r.HORA_FIN) return 0;
+      const date = r.FECHA_CORTE || r.FECHA_SOLICITUD || todayISO();
+      const start = new Date(`${date}T${r.HORA_INICIO}`);
+      let end = new Date(`${date}T${r.HORA_FIN}`);
+      if(!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) return 0;
+      if(end < start) end = new Date(end.getTime() + 24*60*60*1000);
+      return Math.max(0, Math.round((end-start)/60000));
+    }
+    function groupSum(list, keyFn, valueFn=()=>1){
+      const map={};
+      list.forEach(r=>{const k=String(keyFn(r)||'Sin dato'); map[k]=(map[k]||0)+Number(valueFn(r)||0);});
+      return map;
+    }
+    function topEntries(obj, limit=8){return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,limit);}
+    function analyticsRecords(){
+      const from = val('graphDateFrom');
+      const to = val('graphDateTo');
+      const q = val('graphSearch').toLowerCase();
+      return records.filter(r=>{
+        const d = recordDateForAnalytics(r);
+        const dateOk = (!from || d >= from) && (!to || d <= to);
+        const qOk = !q || [r.CONSECUTIVO,r.PEDIDO_REQUERIMIENTO,r.REFERENCIA_CABLE,r.TIPO_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO,r.ESTADO_CORTE].join(' ').toLowerCase().includes(q);
+        return dateOk && qOk;
+      });
+    }
+    function fmtHours(min){const h=min/60; return h ? h.toFixed(h>=10?1:2) : '0';}
+    function renderAnalyticsBar(elId, entries, total, suffix=''){
+      const el=$(elId); if(!el) return;
+      if(!entries.length){el.innerHTML='<div class="empty-soft">Sin datos para el filtro seleccionado.</div>'; return;}
+      const max=Math.max(...entries.map(e=>Number(e[1])||0),1);
+      el.innerHTML = entries.map(([label,value])=>{
+        const pct=Math.max(3, Math.round((Number(value)||0)/max*100));
+        const showVal = typeof value === 'number' ? (Number.isInteger(value)?value:value.toFixed(1)) : value;
+        return `<div class="bar-row"><span title="${escapeHtml(label)}">${escapeHtml(label)}</span><div class="bar-track"><div class="bar-fill fill-blue" style="width:${pct}%"></div></div><strong>${showVal}${suffix}</strong></div>`;
+      }).join('');
+    }
+    function renderAnalytics(){
+      if(!$('analyticsSection')) return;
+      const list=analyticsRecords();
+      const completed=list.filter(r=>r.HORA_INICIO && r.HORA_FIN);
+      const totalMin=completed.reduce((s,r)=>s+recordMinutes(r),0);
+      const hours=totalMin/60;
+      const totalMeters=list.reduce((s,r)=>s+(parseFloat(String(r.METRAJE_FINAL||r.METROS_SOLICITADOS||0).replace(',','.'))||0),0);
+      const avgMin=completed.length?Math.round(totalMin/completed.length):0;
+      const productivity=hours?completed.length/hours:0;
+      const metersHour=hours?totalMeters/hours:0;
+      const pending=list.filter(r=>['PENDIENTE_LIDER','PENDIENTE_GERENCIA','APROBADO_PENDIENTE_CORTE'].includes(r.ESTADO_CORTE)).length;
+      const noOk=list.filter(r=>['NO_CONFORME','SUSPENDIDO','RECHAZADO','REVISAR'].includes(r.ESTADO_CORTE)).length;
+      $('analyticsKpis').innerHTML = [
+        ['Registros', list.length],
+        ['Cortes finalizados', completed.length],
+        ['Horas hombre', fmtHours(totalMin)],
+        ['Promedio por corte', avgMin ? avgMin+' min' : '0 min'],
+        ['Cortes / hora', productivity ? productivity.toFixed(2) : '0'],
+        ['Metros / hora', metersHour ? metersHour.toFixed(1) : '0']
+      ].map(([t,n])=>`<div class="analytics-kpi"><div class="num">${n}</div><div class="txt">${t}</div></div>`).join('');
+      const byDay=groupSum(list,r=>recordDateForAnalytics(r));
+      const byStatus=groupSum(list,r=>statusPillText(r.ESTADO_CORTE));
+      const byType=groupSum(list,r=>r.TIPO_CABLE || r.REFERENCIA_CABLE || 'Sin referencia');
+      const byPerson=groupSum(completed,r=>r.RESPONSABLE_CORTE || 'Sin responsable');
+      const byMetersDay=groupSum(list,r=>recordDateForAnalytics(r),r=>parseFloat(String(r.METRAJE_FINAL||r.METROS_SOLICITADOS||0).replace(',','.'))||0);
+      const typeMins={}; const typeCounts={};
+      completed.forEach(r=>{const k=r.TIPO_CABLE||r.REFERENCIA_CABLE||'Sin referencia'; typeMins[k]=(typeMins[k]||0)+recordMinutes(r); typeCounts[k]=(typeCounts[k]||0)+1;});
+      const avgType=Object.fromEntries(Object.entries(typeMins).map(([k,v])=>[k, typeCounts[k]?Math.round(v/typeCounts[k]):0]));
+      renderAnalyticsBar('graphByDay', topEntries(byDay,10), list.length);
+      renderAnalyticsBar('graphByStatus', topEntries(byStatus,10), list.length);
+      renderAnalyticsBar('graphByType', topEntries(byType,10), list.length);
+      renderAnalyticsBar('graphByPerson', topEntries(byPerson,10), completed.length);
+      renderAnalyticsBar('graphAvgType', topEntries(avgType,10), 0, ' min');
+      renderAnalyticsBar('graphMetersDay', topEntries(byMetersDay,10), 0, ' m');
+      const best = topEntries(byPerson,1)[0];
+      const comment=[];
+      comment.push(`Se analizaron ${list.length} registros; ${completed.length} tienen inicio y final de corte.`);
+      comment.push(`Horas hombre acumuladas: ${fmtHours(totalMin)} h. Promedio operativo: ${avgMin || 0} min por corte.`);
+      if(productivity) comment.push(`Productividad estimada: ${productivity.toFixed(2)} cortes por hora y ${metersHour.toFixed(1)} metros por hora.`);
+      if(best) comment.push(`Mayor volumen finalizado: ${best[0]} con ${best[1]} corte(s).`);
+      if(pending) comment.push(`Hay ${pending} registro(s) pendientes o aprobados por finalizar; conviene revisar para evitar demoras.`);
+      if(noOk) comment.push(`Hay ${noOk} registro(s) con novedad, suspensión o rechazo; deben revisarse para control de calidad.`);
+      if(!list.length) comment.splice(0, comment.length, 'No hay registros en el rango seleccionado. Ajuste el filtro de fechas o búsqueda.');
+      $('analyticsComment').innerHTML = `<strong>Lectura automática del periodo:</strong><ul>${comment.map(c=>`<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+      const rows=list.slice(0,80).map(r=>`<tr><td>${escapeHtml(recordDateForAnalytics(r))}</td><td>${escapeHtml(r.CONSECUTIVO||'')}</td><td>${escapeHtml(r.REFERENCIA_CABLE||'')}</td><td>${escapeHtml(r.CARRETE_LOTE||'')}</td><td>${escapeHtml(r.REMANENTE_PROYECTADO||'')}</td><td>${escapeHtml(r.RESPONSABLE_CORTE||'')}</td><td>${escapeHtml(recordMinutes(r)||'')}</td><td>${statusPill(r.ESTADO_CORTE)}</td></tr>`).join('');
+      $('analyticsDetail').innerHTML = rows ? `<table class="mini-table"><thead><tr><th>Fecha</th><th>Código</th><th>Cable</th><th>Carrete</th><th>Sobrante</th><th>Responsable</th><th>Min</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty-soft">Sin registros para mostrar.</div>';
+    }
+    function statusPillText(status){
+      const map={CONFORME:'Conforme',AUTORIZADO:'Autorizado',SUSPENDIDO:'Suspendido',NO_CONFORME:'No conforme',REVISAR:'Revisar',PENDIENTE_LIDER:'Pendiente líder',PENDIENTE_GERENCIA:'Pendiente gerencia',APROBADO_PENDIENTE_CORTE:'Aprobado pendiente corte',RECHAZADO:'Rechazado'};
+      return map[status] || status || 'Sin estado';
+    }
+    function setPage(page){
+      if(page === 'analytics' && !isRole('LIDER_LOGISTICO','GERENCIA')) page='operation';
+      document.body.dataset.page=page;
+      document.querySelectorAll('[data-page-btn]').forEach(b=>b.classList.toggle('page-active', b.dataset.pageBtn===page));
+      if(page==='analytics') renderAnalytics();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+
+    function renderAll(){renderDashboard(); renderTable(); renderOperatorApprovedList(); renderAnalytics();}
 
     window.deleteRecord = async function(id){
       if(!canDeleteRecords()) return toast('Solo Líder Logístico o Gerencia pueden eliminar cortes.', 'error');
@@ -1684,6 +1866,8 @@
     }
 
     async function exportRecords(format){
+      if(!isRole('LIDER_LOGISTICO')){toast('Solo Líder Logístico puede exportar archivos.', 'error'); return;}
+      if(!['xls','txt'].includes(format)){toast('Formato no disponible para este rol.', 'error'); return;}
       if(!records.length){toast('No hay registros para exportar.', 'error'); return;}
       const stamp=nowParts().stamp;
       let filename='', content='', mime='';
@@ -1696,11 +1880,7 @@
       await copySummaryToClipboard(summary);
       toast(`Archivo generado: ${downloadedName}`, 'export');
 
-      if(format === 'xls'){
-        await sendLastFileByEmail(true);
-      }else{
-        showSharePanel(`<strong>Archivo generado:</strong> ${escapeHtml(downloadedName)}<br>El archivo quedó descargado. Para envío corporativo con adjunto use preferiblemente la opción Excel.`);
-      }
+      showSharePanel(`<strong>Archivo generado:</strong> ${escapeHtml(downloadedName)}<br>El archivo quedó descargado correctamente.`);
     }
 
     function buildShareSummary(filename=''){
@@ -1801,24 +1981,15 @@ Quedo atento(a) a la validación correspondiente.`;
     }
 
     function enhanceAdaptiveInputs(){
-      const targets = document.querySelectorAll('input[type="text"], input:not([type]), textarea');
+      const targets = document.querySelectorAll('textarea');
       targets.forEach(el=>{
-        const field = el.closest('.field');
-        if(!field) return;
-        if(el.tagName === 'TEXTAREA') el.classList.add('auto-grow');
+        el.classList.add('auto-grow');
         const update = ()=>{
-          const valueLength = (el.value || '').length;
-          const overflow = el.scrollWidth > el.clientWidth + 8;
-          const shouldExpand = document.activeElement === el || valueLength > 38 || overflow;
-          field.classList.toggle('expanded', shouldExpand);
-          if(el.tagName === 'TEXTAREA'){
-            el.style.height = 'auto';
-            el.style.height = Math.min(Math.max(el.scrollHeight, 54), 240) + 'px';
-          }
+          el.style.height = 'auto';
+          el.style.height = Math.min(Math.max(el.scrollHeight, 130), 260) + 'px';
         };
         el.addEventListener('input', update);
         el.addEventListener('focus', update);
-        el.addEventListener('blur', ()=>setTimeout(update, 80));
         update();
       });
     }
@@ -1974,6 +2145,8 @@ Quedo atento(a) a la validación correspondiente.`;
       if($('approvalPanel')) $('approvalPanel').hidden = !showApproval;
       if($('usersPanel')) $('usersPanel').hidden = !showUsers;
       if($('btnDeleteAll')) $('btnDeleteAll').hidden = !canDeleteRecords();
+      if($('exportPanel')) $('exportPanel').hidden = !isRole('LIDER_LOGISTICO');
+      if(document.body.dataset.page === 'analytics' && !isRole('LIDER_LOGISTICO','GERENCIA')) setPage('operation');
       if($('cutForm')) $('cutForm').querySelectorAll('input,select,textarea,button').forEach(el=>{ if(el.id !== 'btnSound') el.disabled = !canCreateRecords(); });
       syncOperatorFields();
       renderApprovalPanel();
@@ -2268,6 +2441,10 @@ Quedo atento(a) a la validación correspondiente.`;
     document.addEventListener('click', (e)=>{ if(e.target.matches('button')) beep('click'); });
     document.querySelectorAll('[data-view-btn]').forEach(btn=>btn.addEventListener('click', ()=>setView(btn.dataset.viewBtn)));
     document.querySelectorAll('[data-export]').forEach(btn=>btn.addEventListener('click', ()=>exportRecords(btn.dataset.export)));
+    document.querySelectorAll('[data-page-btn]').forEach(btn=>btn.addEventListener('click', ()=>setPage(btn.dataset.pageBtn)));
+    ['graphDateFrom','graphDateTo','graphSearch'].forEach(id=>{ if($(id)) $(id).addEventListener('input', renderAnalytics); });
+    if($('btnApplyGraphs')) $('btnApplyGraphs').addEventListener('click', renderAnalytics);
+    if($('btnClearGraphs')) $('btnClearGraphs').addEventListener('click', ()=>{['graphDateFrom','graphDateTo','graphSearch'].forEach(id=>{ if($(id)) $(id).value=''; }); renderAnalytics(); toast('Filtros limpiados','click');});
     $('cutForm').addEventListener('submit', saveRecord);
     $('btnSaveRecord').addEventListener('click', ()=>{submitIntent='record';});
     $('btnSendApproval').addEventListener('click', ()=>{submitIntent='approval'; $('cutForm').requestSubmit();});
@@ -2278,9 +2455,9 @@ Quedo atento(a) a la validación correspondiente.`;
     $('btnToday').addEventListener('click', ()=>{const n=nowParts(); $('fechaSolicitud').value=n.date; $('horaSolicitud').value=n.time; $('fechaCorte').value=n.date; franjaManual=false; autoFranja(true); updateStatusPanel(); toast('Fecha y hora actualizadas', 'ok');});
     $('btnRefresh').addEventListener('click', ()=>{renderAll(); toast('Vista actualizada', 'ok');});
     $('btnSound').addEventListener('click', ()=>{soundEnabled=!soundEnabled; $('btnSound').textContent = 'Sonido: ' + (soundEnabled?'ON':'OFF'); toast(soundEnabled?'Sonido activado':'Sonido desactivado','click')});
-    $('btnEmail').addEventListener('click', sendLastFileByEmail);
-    $('btnSaveEmailConfig').addEventListener('click', saveEmailConfig);
-    $('btnOpenMail').addEventListener('click', ()=>openEmailFallback(lastExportFile?.filename || 'control_corte_cable.xlsx'));
+    if($('btnEmail')) $('btnEmail').addEventListener('click', sendLastFileByEmail);
+    if($('btnSaveEmailConfig')) $('btnSaveEmailConfig').addEventListener('click', saveEmailConfig);
+    if($('btnOpenMail')) $('btnOpenMail').addEventListener('click', ()=>openEmailFallback(lastExportFile?.filename || 'control_corte_cable.xlsx'));
     if($('btnLogin')) $('btnLogin').addEventListener('click', loginFirebase);
     if($('btnRegisterUser')) $('btnRegisterUser').addEventListener('click', registerFirebaseUser);
     if($('btnLogout')) $('btnLogout').addEventListener('click', logoutFirebase);
@@ -2321,6 +2498,7 @@ Quedo atento(a) a la validación correspondiente.`;
     setAuthView();
     initFirebase();
     calcRemanent();
+    setPage('operation');
     renderAll();
   </script>
 </body>
