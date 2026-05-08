@@ -656,6 +656,7 @@
     .quick-step span{width:34px;height:34px;flex:0 0 auto;border-radius:12px;display:grid;place-items:center;color:white;background:linear-gradient(135deg,var(--teal),var(--navy));font-weight:900}
     .operator-simple fieldset{padding:14px}
     .operator-simple .primary-input input,
+    .operator-simple .primary-input select,
     .operator-simple .primary-input textarea{font-size:1.05rem; padding:15px 14px; border-width:2px}
     .operator-simple .readonly-result input{font-size:1.15rem; font-weight:900; color:var(--navy); background:#f8fafc}
     .system-hidden{display:none !important}
@@ -707,6 +708,38 @@
     body:not([data-app-role="LIDER_LOGISTICO"]) .leader-export-only{display:none !important}
     .legacy-chart{display:none !important}
     .toolbar{position:static !important; top:auto !important; z-index:auto !important; backdrop-filter:none !important}
+
+    .calc-summary{
+      margin:12px 0 0;
+      border-radius:18px;
+      border:1px solid rgba(11,42,91,.14);
+      background:linear-gradient(135deg,#f8fafc,#eef6ff);
+      padding:14px;
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:12px;
+      align-items:center;
+    }
+    .calc-formula{
+      font-weight:950;
+      color:var(--navy);
+      font-size:clamp(1rem, 2vw, 1.25rem);
+      line-height:1.2;
+    }
+    .calc-formula span{color:var(--teal)}
+    .calc-rule{
+      font-size:.88rem;
+      line-height:1.35;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .calc-rule strong{color:var(--navy)}
+    .calc-summary.warn{border-color:rgba(243,164,0,.45); background:linear-gradient(135deg,#fffbeb,#fff7ed)}
+    .calc-summary.stop{border-color:rgba(201,21,35,.36); background:linear-gradient(135deg,#fff1f2,#fff7ed)}
+    .calc-summary.ok{border-color:rgba(15,143,70,.30); background:linear-gradient(135deg,#ecfdf5,#f8fafc)}
+    .approval-gate .approval-route{display:inline-block;margin-top:8px;padding:6px 10px;border-radius:999px;background:#fff;color:#7c2d12;border:1px solid rgba(124,45,18,.16)}
+    @media(max-width:760px){.calc-summary{grid-template-columns:1fr}.calc-formula{font-size:1.08rem}.operator-simple .primary-input select{font-size:1rem;padding:15px 14px;border-width:2px}}
+
     .operator-simple textarea{min-height:140px; resize:vertical; line-height:1.42}
     .operator-simple .field{min-width:0}
     .operator-simple input,
@@ -859,9 +892,10 @@
             <fieldset>
               <legend>Datos del corte</legend>
               <div class="form-grid">
-                <div class="field col-4 primary-input"><label for="pedido">Pedido / requerimiento</label><input id="pedido" placeholder="Número de pedido si aplica" /></div>
-                <div class="field col-4 primary-input"><label for="referencia">Cable / referencia *</label><input id="referencia" required placeholder="Referencia o descripción del cable" /></div>
-                <div class="field col-4 primary-input"><label for="metrosSolicitados">Metros a cortar *</label><input type="number" min="0" step="0.01" id="metrosSolicitados" required placeholder="0" /></div>
+                <div class="field col-3 primary-input"><label for="tipoPedido">Tipo de pedido *</label><select id="tipoPedido" required><option value="">Seleccione</option><option value="VENTAS">Ventas</option><option value="ALUMBRADO">Alumbrado</option></select></div>
+                <div class="field col-3 primary-input"><label for="pedido">Pedido / requerimiento</label><input id="pedido" placeholder="Número de pedido si aplica" /></div>
+                <div class="field col-3 primary-input"><label for="referencia">Cable / referencia *</label><input id="referencia" required placeholder="Referencia o descripción del cable" /></div>
+                <div class="field col-3 primary-input"><label for="metrosSolicitados">Metros a cortar *</label><input type="number" min="0" step="0.01" id="metrosSolicitados" required placeholder="0" /></div>
               </div>
             </fieldset>
 
@@ -872,6 +906,10 @@
                 <div class="field col-4 primary-input"><label for="disponibleAntes">Metros disponibles en carrete *</label><input type="number" min="0" step="0.01" id="disponibleAntes" required placeholder="0" /></div>
                 <div class="field col-2 readonly-result"><label for="remanenteProyectado">Sobrante</label><input id="remanenteProyectado" class="readonly" readonly /></div>
                 <div class="field col-2 readonly-result"><label for="restriccionRemanente">Condición</label><input id="restriccionRemanente" class="readonly" readonly /></div>
+              </div>
+              <div class="calc-summary" id="calcSummary">
+                <div class="calc-formula">Disponible − a cortar = <span>Sobrante</span></div>
+                <div class="calc-rule">Ingrese los metros disponibles y los metros a cortar para calcular la restricción.</div>
               </div>
               <div class="approval-gate" id="approvalGate">
                 <div class="gate-icon">⚠️</div>
@@ -1062,7 +1100,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const VERSION = '3.8.3-FIREBASE-FIX';
+    const VERSION = '3.8.5-FLUJO-REMANENTE';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -1116,6 +1154,7 @@
       ['FECHA_SOLICITUD','Fecha Solicitud'],
       ['HORA_SOLICITUD','Hora Solicitud'],
       ['PEDIDO_REQUERIMIENTO','Pedido/Requerimiento'],
+      ['TIPO_PEDIDO','Tipo Pedido'],
       ['CLIENTE_PROCESO','Cliente/Proceso'],
       ['REFERENCIA_CABLE','Referencia Cable'],
       ['CALIBRE','Calibre'],
@@ -1223,19 +1262,35 @@
       }
       $('restriccionRemanente').value = restriccion;
 
+      const calc = $('calcSummary');
+      if(calc){
+        calc.classList.remove('ok','warn','stop');
+        if(hasValues){
+          const route = rem > 50
+            ? 'No requiere aprobación. Puede continuar con el corte normal.'
+            : (rem === 50
+                ? 'Requiere validación del Líder Logístico. No continuar hasta aprobación.'
+                : 'Requiere autorización de Gerencia. No continuar hasta aprobación.');
+          calc.classList.add(rem > 50 ? 'ok' : (rem === 50 ? 'warn' : 'stop'));
+          calc.innerHTML = `<div class="calc-formula">${normalizeDecimal(disponible)} m − ${normalizeDecimal(solicitado)} m = <span>${normalizeDecimal(rem)} m</span></div><div class="calc-rule"><strong>${restriccion || 'Sin condición'}</strong><br>${route}</div>`;
+        }else{
+          calc.innerHTML = '<div class="calc-formula">Disponible − a cortar = <span>Sobrante</span></div><div class="calc-rule">Ingrese los metros disponibles y los metros a cortar para calcular la restricción.</div>';
+        }
+      }
+
       if($('autorizadoMenor50')) $('autorizadoMenor50').value = 'NO';
       if($('autorizadoPor')) $('autorizadoPor').value = rem < 50 ? 'Gerencia' : (rem === 50 ? 'Jefatura Logística' : '');
-      if($('novedad')) $('novedad').value = (hasValues && rem <= 50) ? 'SUSPENDIDO' : 'SIN_NOVEDAD';
-      if($('cumpleTiempo')) $('cumpleTiempo').value = (hasValues && rem <= 50) ? 'PENDIENTE' : 'SI';
+      if($('novedad')) $('novedad').value = (hasValues && rem <= 50 && !currentFormApproved()) ? 'SUSPENDIDO' : 'SIN_NOVEDAD';
+      if($('cumpleTiempo')) $('cumpleTiempo').value = (hasValues && rem <= 50 && !currentFormApproved()) ? 'PENDIENTE' : 'SI';
       if($('observacion')) $('observacion').value = val('motivoAutorizacion');
 
       const gate = $('approvalGate');
       const gateText = $('approvalGateText');
-      if(gate && hasValues && rem <= 50){
+      if(gate && hasValues && rem <= 50 && !currentFormApproved()){
         gate.classList.add('show');
         gateText.innerHTML = rem < 50
-          ? '<strong>Requiere autorización de Gerencia.</strong><br>Guarde la solicitud y no continúe el corte hasta recibir aprobación.'
-          : '<strong>Requiere validación de Líder Logístico.</strong><br>Guarde la solicitud y no continúe el corte hasta recibir aprobación.';
+          ? '<strong>Requiere autorización de Gerencia.</strong><br>Presione <strong>Enviar aprobación</strong>. El corte queda bloqueado hasta recibir respuesta.<br><span class="approval-route">Ruta: Operario → Gerencia</span>'
+          : '<strong>Requiere validación del Líder Logístico.</strong><br>Presione <strong>Enviar aprobación</strong>. El corte queda bloqueado hasta recibir respuesta.<br><span class="approval-route">Ruta: Operario → Líder Logístico</span>';
       }else if(gate){
         gate.classList.remove('show');
         if(gateText) gateText.innerHTML = '<strong>Requiere aprobación.</strong><br>Guarde la solicitud y no continúe el corte hasta recibir aprobación.';
@@ -1369,7 +1424,7 @@
       const novedad = val('novedad');
       const franja = val('franjaAtencion');
       const cumpleTiempo = val('cumpleTiempo');
-      if(!val('referencia') || !val('carreteLote') || !val('metrosSolicitados') || !val('disponibleAntes')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete cable, metros a cortar y carrete para calcular el estado.', cls:'status-warn'};
+      if(!val('tipoPedido') || !val('referencia') || !val('carreteLote') || !val('metrosSolicitados') || !val('disponibleAntes')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete tipo de pedido, cable, metros a cortar y carrete para calcular el estado.', cls:'status-warn'};
       if(Number.isFinite(rem) && rem < 50 && !currentFormApproved()) return {estado:'PENDIENTE_GERENCIA', label:'Pendiente gerencia', detail:'Remanente menor a 50 m: requiere autorización de Gerencia antes del corte.', cls:'status-warn'};
       if(Number.isFinite(rem) && rem === 50 && !currentFormApproved()) return {estado:'PENDIENTE_LIDER', label:'Pendiente líder', detail:'Remanente igual a 50 m: requiere validación del Líder Logístico.', cls:'status-warn'};
       if(Number.isFinite(rem) && rem <= 50 && currentFormApproved() && (!val('horaInicio') || !val('horaFin'))) return {estado:'APROBADO_PENDIENTE_CORTE', label:'Aprobado, pendiente corte', detail:'La aprobación fue recibida. Registre hora de inicio y finalización.', cls:'status-warn'};
@@ -1406,6 +1461,7 @@
         FECHA_SOLICITUD: val('fechaSolicitud'),
         HORA_SOLICITUD: val('horaSolicitud'),
         PEDIDO_REQUERIMIENTO: cleanText(val('pedido')),
+        TIPO_PEDIDO: cleanText(val('tipoPedido')),
         CLIENTE_PROCESO: cleanText(val('clienteProceso')),
         REFERENCIA_CABLE: cleanText(val('referencia')),
         CALIBRE: cleanText(val('calibre')),
@@ -1493,7 +1549,7 @@
       const rem = Number(String($('remanenteProyectado').value).replace(',','.'));
       const approvalNeeded = Number.isFinite(rem) && rem <= 50;
       const approved = currentFormApproved();
-      const required = ['referencia','metrosSolicitados','carreteLote','disponibleAntes'];
+      const required = ['tipoPedido','referencia','metrosSolicitados','carreteLote','disponibleAntes'];
       if(submitIntent === 'approval') required.push('motivoAutorizacion');
       if(submitIntent !== 'approval') required.push('responsableChequeo','horaInicio','horaFin','metrajeFinal','remanenteReal');
       for(const id of required){
@@ -1554,7 +1610,7 @@
       const f=val('filterStatus');
       return records.filter(r=>{
         const statusOk = f === 'TODOS' || r.ESTADO_CORTE === f;
-        const qOk = !q || [r.PEDIDO_REQUERIMIENTO,r.CLIENTE_PROCESO,r.REFERENCIA_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO].join(' ').toLowerCase().includes(q);
+        const qOk = !q || [r.PEDIDO_REQUERIMIENTO,r.TIPO_PEDIDO,r.CLIENTE_PROCESO,r.REFERENCIA_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO].join(' ').toLowerCase().includes(q);
         return statusOk && qOk;
       });
     }
@@ -1580,7 +1636,7 @@
       const rows = list.map(r=>`
         <tr>
           <td><strong>${escapeHtml(r.CONSECUTIVO)}</strong><br><span style="color:#667085">${escapeHtml(r.FECHA_SOLICITUD)} ${escapeHtml(r.HORA_SOLICITUD)}</span></td>
-          <td>${escapeHtml(r.PEDIDO_REQUERIMIENTO)}<br><span style="color:#667085">${escapeHtml(r.CLIENTE_PROCESO)}</span></td>
+          <td>${escapeHtml(r.PEDIDO_REQUERIMIENTO)}<br><span style="color:#667085">${escapeHtml(r.TIPO_PEDIDO || '')}${r.TIPO_PEDIDO ? ' · ' : ''}${escapeHtml(r.CLIENTE_PROCESO)}</span></td>
           <td>${escapeHtml(r.REFERENCIA_CABLE)}<br><span style="color:#667085">${escapeHtml([r.CALIBRE,r.TIPO_CABLE,r.COLOR].filter(Boolean).join(' · '))}</span></td>
           <td>${escapeHtml(r.CARRETE_LOTE)}<br><span style="color:#667085">Disp: ${escapeHtml(r.METROS_DISPONIBLES_ANTES)} m · Rem: ${escapeHtml(r.REMANENTE_PROYECTADO)} m</span></td>
           <td>${escapeHtml(r.RESTRICCION_REMANENTE)}<br>${r.AUTORIZADO_MENOR_50==='SI'?'<span class="pill pill-auth">Autorizado</span>':''}</td>
@@ -1676,7 +1732,7 @@
       return records.filter(r=>{
         const d = recordDateForAnalytics(r);
         const dateOk = (!from || d >= from) && (!to || d <= to);
-        const qOk = !q || [r.CONSECUTIVO,r.PEDIDO_REQUERIMIENTO,r.REFERENCIA_CABLE,r.TIPO_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO,r.ESTADO_CORTE].join(' ').toLowerCase().includes(q);
+        const qOk = !q || [r.CONSECUTIVO,r.PEDIDO_REQUERIMIENTO,r.TIPO_PEDIDO,r.REFERENCIA_CABLE,r.TIPO_CABLE,r.CARRETE_LOTE,r.RESPONSABLE_CORTE,r.RESPONSABLE_CHEQUEO,r.ESTADO_CORTE].join(' ').toLowerCase().includes(q);
         return dateOk && qOk;
       });
     }
@@ -1777,7 +1833,7 @@
       $('aprobacionEstadoActual').value = r.APROBACION_ESTADO || '';
       $('aprobadoPorActual').value = r.APROBADO_POR || '';
       $('fechaAprobacionActual').value = r.FECHA_APROBACION || '';
-      $('fechaSolicitud').value=r.FECHA_SOLICITUD||''; $('horaSolicitud').value=r.HORA_SOLICITUD||''; $('pedido').value=r.PEDIDO_REQUERIMIENTO||''; $('clienteProceso').value=r.CLIENTE_PROCESO||'Logística';
+      $('fechaSolicitud').value=r.FECHA_SOLICITUD||''; $('horaSolicitud').value=r.HORA_SOLICITUD||''; $('pedido').value=r.PEDIDO_REQUERIMIENTO||''; if($('tipoPedido')) $('tipoPedido').value=r.TIPO_PEDIDO||''; $('clienteProceso').value=r.CLIENTE_PROCESO||'Logística';
       $('referencia').value=r.REFERENCIA_CABLE||''; $('calibre').value=r.CALIBRE||''; $('tipoCable').value=r.TIPO_CABLE||''; $('colorCable').value=r.COLOR||''; $('metrosSolicitados').value=r.METROS_SOLICITADOS||''; $('ubicacionProducto').value=r.UBICACION_PRODUCTO||'';
       $('carreteLote').value=r.CARRETE_LOTE||''; $('disponibleAntes').value=r.METROS_DISPONIBLES_ANTES||''; $('autorizadoMenor50').value=r.AUTORIZADO_MENOR_50||'NO'; $('autorizadoPor').value=r.AUTORIZADO_POR||''; $('motivoAutorizacion').value=r.MOTIVO_AUTORIZACION||'';
       $('fechaCorte').value=r.FECHA_CORTE||''; $('horaInicio').value=r.HORA_INICIO||''; $('horaFin').value=r.HORA_FIN||''; $('metrajeFinal').value=r.METRAJE_FINAL||''; $('remanenteReal').value=r.REMANENTE_REAL||''; $('evidenciaTexto').value=r.EVIDENCIA_DESCRIPCION||'Registro digital';
@@ -2179,7 +2235,7 @@ Quedo atento(a) a la validación correspondiente.`;
         firebaseReady = false;
         updateCloudStatus('Configurar Firebase','warn');
         setAuthView();
-        showSharePanel('<strong>Firebase no está configurado.</strong><br>El archivo publicado no tiene los datos del proyecto Firebase. Reemplace el index.html por esta versión y abra con ?v=384.');
+        showSharePanel('<strong>Firebase no está configurado.</strong><br>El archivo publicado no tiene los datos del proyecto Firebase. Reemplace el index.html por esta versión y abra con ?v=385.');
         return false;
       }
       updateCloudStatus('Conectando nube','warn');
@@ -2542,7 +2598,7 @@ Quedo atento(a) a la validación correspondiente.`;
     });
     $('btnAutoFranja').addEventListener('click', ()=>{franjaManual=false; autoFranja(true); toast('Franja calculada automáticamente', 'ok');});
     ['metrosSolicitados','disponibleAntes','horaSolicitud','autorizadoMenor50','autorizadoPor','motivoAutorizacion','corteUniforme','tramoRotulado','evidenciaRegistro','cumpleTiempo','novedad','pedido','referencia','carreteLote','metrajeFinal','remanenteReal','responsableChequeo'].forEach(id=>$(id).addEventListener('input', calcRemanent));
-    ['autorizadoMenor50','autorizadoPor','cumpleTiempo','novedad'].forEach(id=>$(id).addEventListener('change', calcRemanent));
+    ['tipoPedido','autorizadoMenor50','autorizadoPor','cumpleTiempo','novedad'].forEach(id=>$(id).addEventListener('change', calcRemanent));
 
     resetOldAppCacheOnce();
     setupInstallPrompt();
