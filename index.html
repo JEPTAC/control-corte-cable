@@ -768,7 +768,7 @@
     <section class="card cloud-card">
       <div class="card-header">
         <h2>Ingreso y trazabilidad</h2>
-        <span class="connection-pill warn" id="cloudStatus">Conexión local</span>
+        <span class="connection-pill warn" id="cloudStatus">Conectando nube</span>
       </div>
       <div class="card-body">
         <div class="cloud-grid">
@@ -1095,6 +1095,21 @@
     let approvalNotificationsEnabled = localStorage.getItem(NOTIFY_KEY) === '1';
     let approvalNotificationInitialized = false;
     let knownApprovalNoticeKeys = new Set();
+    const CACHE_RESET_KEY = 'control_corte_cache_reset_v384';
+    async function resetOldAppCacheOnce(){
+      try{
+        if(sessionStorage.getItem(CACHE_RESET_KEY)) return;
+        sessionStorage.setItem(CACHE_RESET_KEY, '1');
+        if('serviceWorker' in navigator){
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        if(window.caches){
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      }catch(_e){}
+    }
 
     const columns = [
       ['CONSECUTIVO','Consecutivo'],
@@ -2160,50 +2175,60 @@ Quedo atento(a) a la validación correspondiente.`;
     }
     async function initFirebase(){
       if(firebaseReady) return true;
-      if(firebaseInitPromise) return firebaseInitPromise;
-      firebaseInitPromise = (async()=>{
-        if(!isFirebaseConfigured()){
-          firebaseReady = false;
-          updateCloudStatus('Configurar Firebase','warn');
-          setAuthView();
-          showSharePanel('<strong>Firebase no está configurado.</strong><br>Revise que el objeto FIREBASE_CONFIG tenga apiKey, authDomain, projectId, storageBucket, messagingSenderId y appId.');
-          firebaseInitPromise = null;
-          return false;
+      if(!isFirebaseConfigured()){
+        firebaseReady = false;
+        updateCloudStatus('Configurar Firebase','warn');
+        setAuthView();
+        showSharePanel('<strong>Firebase no está configurado.</strong><br>El archivo publicado no tiene los datos del proyecto Firebase. Reemplace el index.html por esta versión y abra con ?v=384.');
+        return false;
+      }
+      updateCloudStatus('Conectando nube','warn');
+      try{
+        const appMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+        const authMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+        const fsMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+        const app = (appMod.getApps && appMod.getApps().length) ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+        fb = {
+          ...authMod,
+          ...fsMod,
+          app,
+          appMod,
+          authMod,
+          initializeSecondaryApp: appMod.initializeApp,
+          deleteApp: appMod.deleteApp,
+          auth: authMod.getAuth(app),
+          db: fsMod.getFirestore(app)
+        };
+        firebaseReady = true;
+        updateCloudStatus('Nube disponible','ok');
+        if(!firebaseObserverReady){
+          firebaseObserverReady = true;
+          fb.onAuthStateChanged(fb.auth, async user=>{
+            currentUser = user;
+            if(user){
+              await ensureUserProfile(user);
+              subscribeCloudRecords();
+              if(isRole('GERENCIA')) subscribeUsers();
+            } else {
+              currentProfile = null;
+              if(cloudRecordsUnsub) cloudRecordsUnsub();
+              if(cloudUsersUnsub) cloudUsersUnsub();
+              if(cloudPreUsersUnsub) cloudPreUsersUnsub();
+              updateCloudStatus('Nube disponible','ok');
+            }
+            setAuthView();
+          });
         }
-        updateCloudStatus('Conectando nube','warn');
-        try{
-          const appMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
-          const authMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
-          const fsMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
-          let app;
-          try{ app = appMod.getApp ? appMod.getApp() : null; }
-          catch(_e){ app = null; }
-          if(!app) app = appMod.initializeApp(FIREBASE_CONFIG);
-          fb = {...authMod, ...fsMod, app, appMod, authMod, initializeSecondaryApp: appMod.initializeApp, deleteApp: appMod.deleteApp, auth:authMod.getAuth(app), db:fsMod.getFirestore(app)};
-          firebaseReady = true;
-          updateCloudStatus('Nube disponible','ok');
-          if(!firebaseObserverReady){
-            firebaseObserverReady = true;
-            fb.onAuthStateChanged(fb.auth, async user=>{
-              currentUser = user;
-              if(user){ await ensureUserProfile(user); subscribeCloudRecords(); if(isRole('GERENCIA')) subscribeUsers(); }
-              else { currentProfile=null; if(cloudRecordsUnsub) cloudRecordsUnsub(); if(cloudUsersUnsub) cloudUsersUnsub(); if(cloudPreUsersUnsub) cloudPreUsersUnsub(); updateCloudStatus('Nube disponible','ok'); }
-              setAuthView();
-            });
-          }
-          setAuthView();
-          return true;
-        }catch(err){
-          firebaseReady = false;
-          firebaseInitPromise = null;
-          updateCloudStatus('Sin conexión nube','warn');
-          const msg = err && err.message ? err.message : 'No fue posible iniciar Firebase.';
-          showSharePanel('<strong>No se conectó a Firebase.</strong><br>Verifique internet, que el dominio de GitHub Pages esté autorizado en Firebase Authentication y que se haya publicado la última versión.<br><small>'+escapeHtml(msg)+'</small>');
-          setAuthView();
-          return false;
-        }
-      })();
-      return firebaseInitPromise;
+        setAuthView();
+        return true;
+      }catch(err){
+        firebaseReady = false;
+        updateCloudStatus('Sin conexión nube','warn');
+        const msg = err && err.message ? err.message : 'No fue posible iniciar Firebase.';
+        showSharePanel('<strong>No se conectó a Firebase.</strong><br>Revise internet, dominio autorizado de GitHub Pages y que el archivo index.html publicado sea esta versión.<br><small>'+escapeHtml(msg)+'</small>');
+        setAuthView();
+        return false;
+      }
     }
     async function ensureFirebaseReady(){
       if(firebaseReady) return true;
@@ -2519,6 +2544,7 @@ Quedo atento(a) a la validación correspondiente.`;
     ['metrosSolicitados','disponibleAntes','horaSolicitud','autorizadoMenor50','autorizadoPor','motivoAutorizacion','corteUniforme','tramoRotulado','evidenciaRegistro','cumpleTiempo','novedad','pedido','referencia','carreteLote','metrajeFinal','remanenteReal','responsableChequeo'].forEach(id=>$(id).addEventListener('input', calcRemanent));
     ['autorizadoMenor50','autorizadoPor','cumpleTiempo','novedad'].forEach(id=>$(id).addEventListener('change', calcRemanent));
 
+    resetOldAppCacheOnce();
     setupInstallPrompt();
     registerServiceWorker();
     setCurrentDateTime();
