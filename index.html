@@ -1596,10 +1596,10 @@
                 <div class="field col-3"><label for="metrajeFinal">Metraje final</label><input type="text" inputmode="decimal" id="metrajeFinal" placeholder="0" readonly /></div>
                 <div class="field col-3"><label for="remanenteReal">Sobrante real</label><input type="text" inputmode="decimal" id="remanenteReal" placeholder="0" readonly /></div>
                 <div class="field col-6"><label>Acciones de tiempo</label><div class="time-actions"><button type="button" class="btn-green" id="btnStartCut">Iniciar corte</button><button type="button" class="btn-orange" id="btnEndCut">Finalizar corte</button></div><div class="action-hint">Presione Iniciar para activar el cronómetro. Presione Finalizar para detenerlo y registrar el resultado.</div></div>
-                <div class="col-12 checks">
-                  <label class="check-card"><input type="checkbox" id="corteUniforme" checked /> Corte uniforme</label>
-                  <label class="check-card"><input type="checkbox" id="tramoRotulado" checked /> Tramo rotulado</label>
-                  <label class="check-card"><input type="checkbox" id="evidenciaRegistro" checked /> Evidencia/registro realizado</label>
+                <div class="col-12 checks quality-checks">
+                  <label class="check-card"><input type="checkbox" id="corteUniforme" checked /><span class="check-text">Corte uniforme</span></label>
+                  <label class="check-card"><input type="checkbox" id="tramoRotulado" checked /><span class="check-text">Tramo rotulado</span></label>
+                  <label class="check-card"><input type="checkbox" id="evidenciaRegistro" checked /><span class="check-text">Evidencia/registro realizado</span></label>
                 </div>
                 <div class="col-12">
                   <div class="drive-evidence-grid">
@@ -1793,7 +1793,7 @@
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    const VERSION = '4.7.2-EXCEL-EXPORT-FIX';
+    const VERSION = '4.7.3-CHECKS-IOS-FIX';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -3482,7 +3482,89 @@ Quedo atento(a) a la validación correspondiente.`;
       table{min-width:820px !important;}
     }
 
-  </style></head><body><main class="page"><section class="hero"><div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></div><div class="stamp">Periodo: ${escapeHtml(reportDateRangeLabel())}<br>Generado: ${escapeHtml(todayHuman())}</div></section><section class="kpis"><div class="kpi"><b>${m.total}</b><span>Registros</span></div><div class="kpi"><b>${m.completed}</b><span>Cortes finalizados</span></div><div class="kpi"><b>${fmtHours(m.totalMin)}</b><span>Horas hombre</span></div><div class="kpi"><b>${m.avgMin||0} min</b><span>Promedio corte</span></div><div class="kpi"><b>${m.cortesHora?m.cortesHora.toFixed(2):'0'}</b><span>Cortes/hora</span></div><div class="kpi"><b>${m.metrosHora?m.metrosHora.toFixed(1):'0'}</b><span>Metros/hora</span></div></section><section class="grid">${reportBar('Cortes por tipo de pedido',m.byPedido,accent)}${reportBar('Estados del proceso',m.counts,'#0b2a5b')}${reportBar('Cortes por día',m.byDia,'#2563eb')}${reportBar('Productividad por responsable',m.byResp,'#059669')}</section><section class="r-card comment" style="margin-top:14px"><h3>${isAudit?'Lectura de auditoría':'Resumen gerencial'}</h3><ul>${comments}</ul></section><section class="table"><table><thead><tr><th>Fecha</th><th>Código</th><th>Tipo</th><th>Pedido</th><th>Cable</th><th>Carrete</th><th>Metros</th><th>Sobrante</th><th>Estado</th><th>Responsable</th><th>Min</th></tr></thead><tbody>${rows||'<tr><td colspan="11">Sin registros para el periodo seleccionado.</td></tr>'}</tbody></table></section><div class="footer">Electroingeniería · Control de Corte de Cable · Documento generado automáticamente desde la herramienta operativa</div></main></body></html>`;
+  
+
+    /* v4.7.3 - QA final validaciones iOS: casillas compactas y texto horizontal */
+    .quality-checks{
+      display:grid !important;
+      grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+      gap:10px !important;
+      align-items:stretch !important;
+    }
+    .quality-checks .check-card{
+      display:grid !important;
+      grid-template-columns:34px minmax(0,1fr) !important;
+      align-items:center !important;
+      justify-content:start !important;
+      gap:10px !important;
+      width:100% !important;
+      min-width:0 !important;
+      min-height:54px !important;
+      height:auto !important;
+      padding:12px 14px !important;
+      border-radius:14px !important;
+      text-align:left !important;
+      writing-mode:horizontal-tb !important;
+      text-orientation:mixed !important;
+      white-space:normal !important;
+      word-break:normal !important;
+      overflow-wrap:break-word !important;
+      line-height:1.25 !important;
+    }
+    .quality-checks .check-card input{
+      grid-column:1 !important;
+      justify-self:center !important;
+      align-self:center !important;
+      width:22px !important;
+      height:22px !important;
+      min-width:22px !important;
+      min-height:22px !important;
+      margin:0 !important;
+      flex:0 0 22px !important;
+      accent-color:var(--teal) !important;
+    }
+    .quality-checks .check-card .check-text{
+      grid-column:2 !important;
+      display:block !important;
+      min-width:0 !important;
+      color:var(--navy) !important;
+      font-weight:900 !important;
+      font-size:.78rem !important;
+      letter-spacing:.04em !important;
+      text-transform:uppercase !important;
+      line-height:1.24 !important;
+      writing-mode:horizontal-tb !important;
+      text-orientation:mixed !important;
+      white-space:normal !important;
+      word-break:normal !important;
+      overflow-wrap:break-word !important;
+    }
+    .quality-checks .check-card:has(input:disabled){
+      opacity:.72 !important;
+      background:#f8fafc !important;
+    }
+    @media (max-width:700px), (max-device-width:700px){
+      .quality-checks{
+        display:grid !important;
+        grid-template-columns:1fr !important;
+        gap:8px !important;
+        margin-top:8px !important;
+      }
+      .quality-checks .check-card{
+        grid-template-columns:36px minmax(0,1fr) !important;
+        min-height:50px !important;
+        padding:11px 12px !important;
+        border-radius:14px !important;
+        background:#fff !important;
+      }
+      .quality-checks .check-card .check-text{
+        font-size:.76rem !important;
+        line-height:1.22 !important;
+        text-align:left !important;
+      }
+    }
+
+</style></head><body><main class="page"><section class="hero"><div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></div><div class="stamp">Periodo: ${escapeHtml(reportDateRangeLabel())}<br>Generado: ${escapeHtml(todayHuman())}</div></section><section class="kpis"><div class="kpi"><b>${m.total}</b><span>Registros</span></div><div class="kpi"><b>${m.completed}</b><span>Cortes finalizados</span></div><div class="kpi"><b>${fmtHours(m.totalMin)}</b><span>Horas hombre</span></div><div class="kpi"><b>${m.avgMin||0} min</b><span>Promedio corte</span></div><div class="kpi"><b>${m.cortesHora?m.cortesHora.toFixed(2):'0'}</b><span>Cortes/hora</span></div><div class="kpi"><b>${m.metrosHora?m.metrosHora.toFixed(1):'0'}</b><span>Metros/hora</span></div></section><section class="grid">${reportBar('Cortes por tipo de pedido',m.byPedido,accent)}${reportBar('Estados del proceso',m.counts,'#0b2a5b')}${reportBar('Cortes por día',m.byDia,'#2563eb')}${reportBar('Productividad por responsable',m.byResp,'#059669')}</section><section class="r-card comment" style="margin-top:14px"><h3>${isAudit?'Lectura de auditoría':'Resumen gerencial'}</h3><ul>${comments}</ul></section><section class="table"><table><thead><tr><th>Fecha</th><th>Código</th><th>Tipo</th><th>Pedido</th><th>Cable</th><th>Carrete</th><th>Metros</th><th>Sobrante</th><th>Estado</th><th>Responsable</th><th>Min</th></tr></thead><tbody>${rows||'<tr><td colspan="11">Sin registros para el periodo seleccionado.</td></tr>'}</tbody></table></section><div class="footer">Electroingeniería · Control de Corte de Cable · Documento generado automáticamente desde la herramienta operativa</div></main></body></html>`;
     }
     function openReportWindow(html, filename){
       const blob=new Blob([html],{type:'text/html;charset=utf-8'});
