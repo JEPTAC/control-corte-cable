@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Control de Corte de Cable | Electroingeniería</title>
-  <!-- versión 4.3: interfaz móvil/iOS optimizada -->
+  <!-- versión 4.6: QA visual, popups y celdas optimizadas -->
   <style>
     :root{
       --navy:#0b2a5b;
@@ -967,7 +967,7 @@
     @media (max-width:720px){.drive-evidence-grid{grid-template-columns:1fr}.drive-photo-card{padding:13px}.drive-photo-card input[type="file"]{font-size:16px}}
 
 
-    /* v4.3 - Interfaz móvil/iOS optimizada */
+    /* v4.4 - Interfaz móvil/iOS optimizada */
     @supports (-webkit-touch-callout: none) {
       input, select, textarea, button { font-size:16px; }
     }
@@ -1168,6 +1168,211 @@
       .timer-display{font-size:2.25rem !important;}
       input, select, textarea, button{font-size:16px !important;}
       table{min-width:900px !important;}
+    }
+
+
+
+    /* v4.5 - informes documentales solo Líder Logístico */
+    .manager-report-only{display:block}
+    body:not([data-app-role="LIDER_LOGISTICO"]) .manager-report-only{display:none !important}
+    .report-actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
+    .report-actions button{min-height:54px; white-space:normal; line-height:1.2}
+    .report-note{margin-top:10px; font-size:.86rem; color:var(--muted); line-height:1.42; font-weight:700}
+    @media(max-width:760px){.report-actions{grid-template-columns:1fr}.manager-report-only .chart-title{font-size:1rem}}
+
+
+
+    /* v4.6 - QA visual: popups, celdas, iOS y animaciones controladas */
+    :root{
+      --focus-ring:0 0 0 4px rgba(0,138,138,.14);
+      --card-border:1px solid rgba(203,213,225,.92);
+    }
+    html, body{max-width:100%; overflow-x:hidden; -webkit-text-size-adjust:100%;}
+    .app, .card, .card-body, .card-header, fieldset, .auth-panel, .chart-card, .analytics-chart, .report-actions, .share-panel, .approval-item, .user-item{min-width:0; max-width:100%;}
+    .card, fieldset, .auth-panel, .chart-card, .analytics-chart, .approval-item, .user-item, .drive-photo-card{overflow:hidden;}
+    p, h1, h2, h3, h4, .note, .report-note, .approval-meta, .user-meta, .calc-rule, .status-detail, .empty, .empty-soft, .share-panel, .toast, .hero p, .hero-chip, .pill, td, th, label, button{overflow-wrap:anywhere; word-break:normal;}
+    button, .btn, input, select, textarea{-webkit-tap-highlight-color:transparent; touch-action:manipulation;}
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{outline:none; box-shadow:var(--focus-ring) !important; border-color:var(--teal) !important;}
+    button:disabled, .btn:disabled{opacity:.55; filter:saturate(.75); cursor:not-allowed; transform:none !important; box-shadow:none !important;}
+
+    /* Evita expansión animada que desplaza la pantalla en móvil */
+    .field.expanded{grid-column:auto !important; transition:none !important;}
+    .field.expanded input, .field.expanded textarea{box-shadow:none !important; min-height:inherit;}
+    textarea.auto-grow{resize:vertical !important; overflow:auto !important; max-height:none !important;}
+
+    .toolbar{isolation:isolate;}
+    .toolbar-group{min-width:0;}
+    .toolbar-group > *{min-width:0;}
+    .app-menu{align-items:stretch;}
+    .app-menu button{min-width:0;}
+
+    /* Popups/avisos: visibles, centrados y sin salirse */
+    .toast{
+      z-index:2147483000 !important;
+      width:min(560px, calc(100vw - 28px)) !important;
+      min-width:0 !important;
+      max-width:calc(100vw - 28px) !important;
+      padding:14px 16px !important;
+      line-height:1.35 !important;
+      border-radius:18px !important;
+      white-space:normal !important;
+      pointer-events:none;
+    }
+    .share-panel{
+      position:relative;
+      z-index:2;
+      width:100%;
+      grid-template-columns:1fr !important;
+      gap:10px !important;
+      padding:13px !important;
+      border-radius:16px !important;
+      line-height:1.45 !important;
+      white-space:normal !important;
+      overflow-wrap:anywhere !important;
+    }
+    .share-panel .btn, .share-panel button{width:100%; max-width:100%; white-space:normal; min-height:46px;}
+
+    /* Celdas y tarjetas: no superponer, mejor lectura */
+    .kpi, .analytics-kpi{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:0;
+      overflow:hidden;
+    }
+    .kpi .value, .analytics-kpi .num{
+      max-width:100%;
+      white-space:normal !important;
+      overflow-wrap:anywhere;
+      font-variant-numeric:tabular-nums;
+    }
+    .kpi .label, .analytics-kpi .txt, .analytics-kpi .lbl{white-space:normal !important; overflow-wrap:anywhere;}
+    .chart-title{line-height:1.22; overflow-wrap:anywhere;}
+    .legend, .legend-item{min-width:0; max-width:100%;}
+    .legend-item{display:flex; align-items:flex-start; gap:8px; white-space:normal;}
+    .donut{max-width:190px; width:100%; height:auto;}
+
+    .bar-row{min-width:0;}
+    .bar-label{min-width:0; overflow-wrap:anywhere;}
+    .bar-track{min-width:0;}
+    .bar-value{font-variant-numeric:tabular-nums;}
+
+    .table-scroll{width:100%; max-width:100%; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;}
+    .table-scroll table{margin:0;}
+    th{z-index:4;}
+    td, th{line-height:1.28;}
+    .row-actions button{white-space:normal;}
+
+    .auth-row, .form-grid, .analytics-filter-grid{min-width:0;}
+    .field{min-width:0;}
+    .field input, .field select, .field textarea{max-width:100%;}
+    .readonly, input[readonly]{background:#f8fafc !important; color:#0b2a5b; font-weight:900;}
+
+    .timer-card{min-width:0; overflow:hidden;}
+    .timer-display{font-variant-numeric:tabular-nums; letter-spacing:.02em; white-space:nowrap;}
+    .time-actions{min-width:0;}
+    .time-actions button{white-space:normal;}
+
+    .approval-gate, .status-panel, .rule-box, .calc-summary{max-width:100%; overflow:hidden;}
+    .approval-gate.show{display:grid;}
+    .approval-actions, .user-actions, .auth-actions, .form-actions{min-width:0;}
+    .approval-actions button, .user-actions button, .auth-actions button, .form-actions button{white-space:normal;}
+
+    .drive-evidence-grid, .drive-status{min-width:0;}
+    .drive-pill{max-width:100%; overflow-wrap:anywhere;}
+    input[type="file"]{line-height:1.2;}
+
+    .report-actions{align-items:stretch;}
+    .report-actions button{width:100%; overflow-wrap:anywhere;}
+
+    @media (prefers-reduced-motion: reduce){
+      *, *::before, *::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important;}
+    }
+
+    @media (max-width: 760px){
+      body{background:var(--bg) !important;}
+      .app{padding:max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;}
+      .hero{border-radius:22px !important; padding:14px !important; gap:12px !important;}
+      .hero-brand{display:grid !important; grid-template-columns:1fr !important; gap:12px !important; width:100% !important;}
+      .logo-badge{width:100% !important; min-width:0 !important; min-height:68px !important; border-radius:18px !important; padding:10px 12px !important;}
+      .logo-badge img{max-width:190px !important; width:min(75%, 190px) !important; height:auto !important;}
+      .hero h1{font-size:clamp(1.55rem, 7vw, 2.15rem) !important; line-height:1.08 !important; letter-spacing:-.02em !important; max-width:100% !important;}
+      .hero p{font-size:.93rem !important; line-height:1.32 !important;}
+      .hero-chips{display:grid !important; grid-template-columns:1fr !important; gap:7px !important; width:100%;}
+      .hero-chip{justify-content:center !important; width:100% !important; padding:8px 10px !important;}
+      .hero-actions{display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; width:100% !important;}
+      .hero-actions button{width:100% !important; min-width:0 !important;}
+
+      .toolbar{position:sticky !important; top:0 !important; z-index:100 !important; margin:10px 0 !important; padding:8px !important; border:1px solid rgba(203,213,225,.7); border-radius:16px; background:rgba(244,247,251,.94) !important; backdrop-filter:blur(12px);}
+      .toolbar-group{display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; width:100% !important;}
+      .toolbar-group .view-label{grid-column:1 / -1;}
+      .toolbar-group button{width:100% !important; min-width:0 !important; min-height:42px !important;}
+      .app-menu{display:grid !important; grid-template-columns:1fr !important; gap:8px !important;}
+      .app-menu button{min-height:46px !important;}
+
+      .card{border-radius:18px !important; margin-bottom:12px !important;}
+      .card-header{padding:14px !important; gap:8px !important;}
+      .card-header h2, .card-header h3{font-size:1rem !important; line-height:1.2 !important;}
+      .card-body{padding:12px !important;}
+      fieldset{border-radius:16px !important; padding:12px !important; margin-bottom:12px !important;}
+      legend{white-space:normal !important; max-width:100%; line-height:1.2;}
+
+      .cloud-grid, .auth-row, .form-grid, .analytics-filter-grid{display:grid !important; grid-template-columns:1fr !important; gap:10px !important;}
+      .auth-row .field, .form-grid .field, .analytics-filter-grid .field, .analytics-filter-grid .actions{grid-column:1 / -1 !important;}
+      .col-2,.col-3,.col-4,.col-5,.col-6,.col-7,.col-8,.col-12{grid-column:1 / -1 !important;}
+      input, select, textarea{font-size:16px !important; min-height:48px !important; padding:12px !important; border-radius:14px !important;}
+      textarea{min-height:150px !important; max-height:none !important;}
+      label{font-size:.72rem !important; line-height:1.2 !important;}
+
+      .auth-actions, .form-actions, .approval-actions, .user-actions, .inline-tools, .time-actions{display:grid !important; grid-template-columns:1fr !important; gap:8px !important; width:100% !important;}
+      .auth-actions button, .form-actions button, .approval-actions button, .user-actions button, .inline-tools button, .time-actions button{width:100% !important; min-height:48px !important;}
+      .user-chip, .connection-pill, .version-pill{white-space:normal !important; line-height:1.2 !important; justify-content:center; width:100%;}
+
+      .segmented-control, .checks, .exports, .exports-minimal, .report-actions, .drive-evidence-grid, .drive-status{display:grid !important; grid-template-columns:1fr !important; gap:8px !important;}
+      .seg-option, .check-card, .exports button, .report-actions button{min-height:50px !important; width:100% !important;}
+      .seg-option .seg-title, .seg-option .seg-sub{white-space:normal !important;}
+
+      .calc-summary{display:grid !important; grid-template-columns:1fr !important; gap:9px !important; padding:12px !important;}
+      .calc-formula{font-size:1rem !important; line-height:1.25 !important;}
+      .calc-rule{font-size:.86rem !important; line-height:1.4 !important;}
+      .approval-gate.show{grid-template-columns:38px 1fr !important; gap:10px !important;}
+
+      .timer-card{display:grid !important; grid-template-columns:1fr !important; text-align:center !important; gap:8px !important; padding:12px !important;}
+      .timer-display{font-size:clamp(2rem, 13vw, 3.05rem) !important; width:100% !important;}
+      .timer-copy{text-align:center !important; font-size:.9rem !important;}
+
+      .dashboard-grid, .analytics-kpis{display:grid !important; grid-template-columns:1fr !important; gap:9px !important;}
+      .kpi, .analytics-kpi{padding:12px !important; border-radius:16px !important; min-height:auto !important;}
+      .kpi .value, .analytics-kpi .num{font-size:1.5rem !important; line-height:1.08 !important;}
+      .kpi .label, .analytics-kpi .txt, .analytics-kpi .lbl{font-size:.75rem !important; line-height:1.25 !important;}
+      .chart-card, .analytics-chart{padding:12px !important; border-radius:16px !important;}
+      .donut-wrap{display:grid !important; grid-template-columns:1fr !important; justify-items:center !important;}
+      .bar-row{display:grid !important; grid-template-columns:1fr !important; gap:6px !important; padding:8px 0 !important;}
+      .bar-track{height:12px !important; width:100% !important;}
+      .bar-value{text-align:left !important;}
+
+      .table-tools{display:grid !important; grid-template-columns:1fr !important; gap:8px !important;}
+      .search{width:100% !important; max-width:none !important;}
+      .table-tools .toolbar-group{grid-template-columns:1fr !important;}
+      .table-scroll{border-radius:14px !important; max-height:68vh !important;}
+      table{min-width:880px !important;}
+      .mini-table{min-width:720px !important;}
+      th, td{font-size:.76rem !important; padding:8px !important;}
+      .pill{white-space:normal !important; border-radius:10px !important;}
+      .row-actions{display:grid !important; grid-template-columns:1fr !important;}
+
+      .toast{left:8px !important; right:8px !important; bottom:calc(10px + env(safe-area-inset-bottom)) !important; transform:translateY(120%) !important; width:auto !important; max-width:none !important;}
+      .toast.show{transform:translateY(0) !important;}
+    }
+
+    @media (max-width:390px){
+      .app{padding-left:6px !important; padding-right:6px !important;}
+      .card-body{padding:10px !important;}
+      fieldset{padding:10px !important;}
+      .hero h1{font-size:1.48rem !important;}
+      .timer-display{font-size:2rem !important;}
+      table{min-width:820px !important;}
     }
 
   </style>
@@ -1455,6 +1660,17 @@
             </div>
             <div class="export-role-note">Exportación disponible solo para Líder Logístico. Los archivos conservan columnas separadas para consolidación y cargue posterior.</div>
             <div class="share-panel" id="sharePanel"></div>
+          </div>
+
+
+          <div class="chart-card manager-report-only" id="reportPanel">
+            <p class="chart-title">Exportar informes</p>
+            <div class="report-actions">
+              <button type="button" class="btn-green" id="btnReportGerencial">Informe gerencial</button>
+              <button type="button" class="btn-primary" id="btnReportAuditoria">Informe de auditoría</button>
+            </div>
+            <div class="report-note">Genera un documento HTML profesional con resumen, gráficas e indicadores. El correo se abre con asunto y resumen listos; adjunte el informe descargado antes de enviar.</div>
+            <div class="share-panel" id="reportSharePanel"></div>
           </div>
 
           <div class="chart-card cloud-only" id="approvalPanel" hidden>
@@ -2828,6 +3044,305 @@ Generado: ${todayHuman()}${lastLine}
 Quedo atento(a) a la validación correspondiente.`;
     }
 
+
+    function reportRecords(){
+      try{
+        const filtered = analyticsRecords ? analyticsRecords() : [];
+        return filtered && filtered.length ? filtered : records.slice();
+      }catch(_e){ return records.slice(); }
+    }
+    function reportDateRangeLabel(){
+      const from = $('analyticsFrom')?.value || '';
+      const to = $('analyticsTo')?.value || '';
+      if(from && to) return `${from} a ${to}`;
+      if(from) return `Desde ${from}`;
+      if(to) return `Hasta ${to}`;
+      return 'Todos los registros cargados';
+    }
+    function reportMetrics(list){
+      const completed=list.filter(r=>r.HORA_INICIO && r.HORA_FIN);
+      const totalMin=completed.reduce((s,r)=>s+recordMinutes(r),0);
+      const hours=totalMin/60;
+      const totalMeters=list.reduce((s,r)=>s+(parseFloat(String(r.METRAJE_FINAL||r.METROS_SOLICITADOS||0).replace(',','.'))||0),0);
+      const counts={}; list.forEach(r=>{const k=statusPillText(r.ESTADO_CORTE); counts[k]=(counts[k]||0)+1});
+      const byPedido=groupSum(list,r=>r.TIPO_PEDIDO||'Sin tipo');
+      const byDia=groupSum(list,r=>recordDateForAnalytics(r));
+      const byResp=groupSum(completed,r=>r.RESPONSABLE_CORTE||'Sin responsable');
+      const pendientes=list.filter(r=>['PENDIENTE_LIDER','PENDIENTE_GERENCIA','APROBADO_PENDIENTE_CORTE'].includes(r.ESTADO_CORTE)).length;
+      const noConformes=list.filter(r=>['NO_CONFORME','SUSPENDIDO','RECHAZADO','REVISAR'].includes(r.ESTADO_CORTE)).length;
+      return {
+        total:list.length, completed:completed.length, totalMin, hours, totalMeters,
+        avgMin:completed.length?Math.round(totalMin/completed.length):0,
+        cortesHora:hours?completed.length/hours:0,
+        metrosHora:hours?totalMeters/hours:0,
+        pendientes,noConformes, counts, byPedido, byDia, byResp
+      };
+    }
+    function reportBar(title, obj, accent='#0b7f8c'){
+      const entries=Object.entries(obj||{}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,8);
+      const max=Math.max(...entries.map(e=>Number(e[1])||0),1);
+      if(!entries.length) return `<section class="r-card"><h3>${escapeHtml(title)}</h3><div class="r-empty">Sin datos</div></section>`;
+      return `<section class="r-card"><h3>${escapeHtml(title)}</h3>${entries.map(([k,v])=>{
+        const pct=Math.max(5,Math.round((Number(v)||0)/max*100));
+        return `<div class="rbar"><span>${escapeHtml(k)}</span><div><i style="width:${pct}%;background:${accent}"></i></div><b>${escapeHtml(String(Number.isInteger(v)?v:Number(v).toFixed(1)))}</b></div>`;
+      }).join('')}</section>`;
+    }
+    function reportComment(type, m){
+      if(type==='gerencial'){
+        return [
+          `Durante el periodo se consolidaron ${m.total} registro(s), de los cuales ${m.completed} tienen corte finalizado con medición de tiempo.`,
+          `La productividad estimada fue de ${m.cortesHora?m.cortesHora.toFixed(2):'0'} cortes por hora y ${m.metrosHora?m.metrosHora.toFixed(1):'0'} metros por hora.`,
+          m.pendientes ? `Se evidencian ${m.pendientes} registro(s) pendientes o aprobados por finalizar; conviene priorizar su cierre operativo.` : 'No se evidencian pendientes críticos en el periodo filtrado.',
+          m.noConformes ? `Hay ${m.noConformes} registro(s) con novedad o no conformidad que requieren seguimiento.` : 'El periodo no presenta novedades críticas registradas.'
+        ];
+      }
+      return [
+        `Se revisaron ${m.total} registro(s) del periodo con trazabilidad de usuario, carrete, remanente, estado y tiempos de corte.`,
+        `Horas hombre registradas: ${fmtHours(m.totalMin)} h; promedio operativo: ${m.avgMin||0} min por corte finalizado.`,
+        `Pendientes o aprobados por finalizar: ${m.pendientes}. No conformes, suspendidos o rechazados: ${m.noConformes}.`,
+        'El informe debe contrastarse con los registros exportados y las aprobaciones digitales cuando aplique restricción de remanente.'
+      ];
+    }
+    function buildReportHtml(type){
+      const list=reportRecords();
+      const m=reportMetrics(list);
+      const isAudit=type==='auditoria';
+      const title=isAudit?'Informe ejecutivo de auditoría':'Informe gerencial de corte de cable';
+      const subtitle=isAudit?'Rendición de cuentas, trazabilidad y control del proceso':'Seguimiento ejecutivo de productividad y cumplimiento';
+      const accent=isAudit?'#7c2d12':'#007f86';
+      const rows=list.slice(0,160).map(r=>`<tr><td>${escapeHtml(recordDateForAnalytics(r))}</td><td>${escapeHtml(r.CONSECUTIVO||'')}</td><td>${escapeHtml(r.TIPO_PEDIDO||'')}</td><td>${escapeHtml(r.PEDIDO_REQUERIMIENTO||'')}</td><td>${escapeHtml(r.REFERENCIA_CABLE||'')}</td><td>${escapeHtml(r.CARRETE_LOTE||'')}</td><td>${escapeHtml(r.METROS_SOLICITADOS||'')}</td><td>${escapeHtml(r.REMANENTE_PROYECTADO||'')}</td><td>${escapeHtml(statusPillText(r.ESTADO_CORTE))}</td><td>${escapeHtml(r.RESPONSABLE_CORTE||'')}</td><td>${escapeHtml(String(recordMinutes(r)||''))}</td></tr>`).join('');
+      const comments=reportComment(type,m).map(x=>`<li>${escapeHtml(x)}</li>`).join('');
+      return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>
+        body{margin:0;background:#eef3f8;color:#17233b;font-family:Arial,Helvetica,sans-serif}.page{max-width:1180px;margin:0 auto;padding:26px}.hero{background:linear-gradient(135deg,#071d3f,#0b7f8c);color:#fff;border-radius:28px;padding:28px;display:flex;justify-content:space-between;gap:18px;align-items:center;box-shadow:0 18px 50px rgba(7,29,63,.22)}.hero h1{margin:0;font-size:34px;line-height:1}.hero p{margin:8px 0 0;color:#e6f6f6}.stamp{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:12px 14px;font-weight:800}.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0}.kpi{background:white;border-radius:20px;padding:16px;box-shadow:0 10px 25px rgba(7,29,63,.08);border:1px solid #d9e3ef}.kpi b{font-size:24px;color:#0b2a5b}.kpi span{display:block;color:#667085;font-size:12px;font-weight:800;text-transform:uppercase;margin-top:4px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.r-card{background:white;border:1px solid #d9e3ef;border-radius:22px;padding:18px;box-shadow:0 10px 25px rgba(7,29,63,.07)}.r-card h3{margin:0 0 12px;color:#0b2a5b}.rbar{display:grid;grid-template-columns:150px 1fr 52px;gap:10px;align-items:center;margin:10px 0;font-size:13px;font-weight:700}.rbar div{height:12px;background:#edf2f7;border-radius:99px;overflow:hidden}.rbar i{display:block;height:100%;border-radius:99px}.comment ul{margin:8px 0 0;padding-left:20px}.comment li{margin:8px 0;line-height:1.45}.table{margin-top:14px;overflow:auto}.table table{width:100%;border-collapse:collapse;background:white;border-radius:20px;overflow:hidden}.table th{background:#0b2a5b;color:white;text-align:left;font-size:12px;padding:10px}.table td{border-bottom:1px solid #e7edf5;padding:9px;font-size:12px}.footer{margin-top:18px;color:#667085;font-size:12px;text-align:center}@media(max-width:760px){.page{padding:12px}.hero{display:block;border-radius:20px}.hero h1{font-size:24px}.stamp{margin-top:12px}.kpis{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.rbar{grid-template-columns:100px 1fr 42px}.table{font-size:11px}}
+    
+
+    /* v4.6 - QA visual: popups, celdas, iOS y animaciones controladas */
+    :root{
+      --focus-ring:0 0 0 4px rgba(0,138,138,.14);
+      --card-border:1px solid rgba(203,213,225,.92);
+    }
+    html, body{max-width:100%; overflow-x:hidden; -webkit-text-size-adjust:100%;}
+    .app, .card, .card-body, .card-header, fieldset, .auth-panel, .chart-card, .analytics-chart, .report-actions, .share-panel, .approval-item, .user-item{min-width:0; max-width:100%;}
+    .card, fieldset, .auth-panel, .chart-card, .analytics-chart, .approval-item, .user-item, .drive-photo-card{overflow:hidden;}
+    p, h1, h2, h3, h4, .note, .report-note, .approval-meta, .user-meta, .calc-rule, .status-detail, .empty, .empty-soft, .share-panel, .toast, .hero p, .hero-chip, .pill, td, th, label, button{overflow-wrap:anywhere; word-break:normal;}
+    button, .btn, input, select, textarea{-webkit-tap-highlight-color:transparent; touch-action:manipulation;}
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{outline:none; box-shadow:var(--focus-ring) !important; border-color:var(--teal) !important;}
+    button:disabled, .btn:disabled{opacity:.55; filter:saturate(.75); cursor:not-allowed; transform:none !important; box-shadow:none !important;}
+
+    /* Evita expansión animada que desplaza la pantalla en móvil */
+    .field.expanded{grid-column:auto !important; transition:none !important;}
+    .field.expanded input, .field.expanded textarea{box-shadow:none !important; min-height:inherit;}
+    textarea.auto-grow{resize:vertical !important; overflow:auto !important; max-height:none !important;}
+
+    .toolbar{isolation:isolate;}
+    .toolbar-group{min-width:0;}
+    .toolbar-group > *{min-width:0;}
+    .app-menu{align-items:stretch;}
+    .app-menu button{min-width:0;}
+
+    /* Popups/avisos: visibles, centrados y sin salirse */
+    .toast{
+      z-index:2147483000 !important;
+      width:min(560px, calc(100vw - 28px)) !important;
+      min-width:0 !important;
+      max-width:calc(100vw - 28px) !important;
+      padding:14px 16px !important;
+      line-height:1.35 !important;
+      border-radius:18px !important;
+      white-space:normal !important;
+      pointer-events:none;
+    }
+    .share-panel{
+      position:relative;
+      z-index:2;
+      width:100%;
+      grid-template-columns:1fr !important;
+      gap:10px !important;
+      padding:13px !important;
+      border-radius:16px !important;
+      line-height:1.45 !important;
+      white-space:normal !important;
+      overflow-wrap:anywhere !important;
+    }
+    .share-panel .btn, .share-panel button{width:100%; max-width:100%; white-space:normal; min-height:46px;}
+
+    /* Celdas y tarjetas: no superponer, mejor lectura */
+    .kpi, .analytics-kpi{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:0;
+      overflow:hidden;
+    }
+    .kpi .value, .analytics-kpi .num{
+      max-width:100%;
+      white-space:normal !important;
+      overflow-wrap:anywhere;
+      font-variant-numeric:tabular-nums;
+    }
+    .kpi .label, .analytics-kpi .txt, .analytics-kpi .lbl{white-space:normal !important; overflow-wrap:anywhere;}
+    .chart-title{line-height:1.22; overflow-wrap:anywhere;}
+    .legend, .legend-item{min-width:0; max-width:100%;}
+    .legend-item{display:flex; align-items:flex-start; gap:8px; white-space:normal;}
+    .donut{max-width:190px; width:100%; height:auto;}
+
+    .bar-row{min-width:0;}
+    .bar-label{min-width:0; overflow-wrap:anywhere;}
+    .bar-track{min-width:0;}
+    .bar-value{font-variant-numeric:tabular-nums;}
+
+    .table-scroll{width:100%; max-width:100%; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;}
+    .table-scroll table{margin:0;}
+    th{z-index:4;}
+    td, th{line-height:1.28;}
+    .row-actions button{white-space:normal;}
+
+    .auth-row, .form-grid, .analytics-filter-grid{min-width:0;}
+    .field{min-width:0;}
+    .field input, .field select, .field textarea{max-width:100%;}
+    .readonly, input[readonly]{background:#f8fafc !important; color:#0b2a5b; font-weight:900;}
+
+    .timer-card{min-width:0; overflow:hidden;}
+    .timer-display{font-variant-numeric:tabular-nums; letter-spacing:.02em; white-space:nowrap;}
+    .time-actions{min-width:0;}
+    .time-actions button{white-space:normal;}
+
+    .approval-gate, .status-panel, .rule-box, .calc-summary{max-width:100%; overflow:hidden;}
+    .approval-gate.show{display:grid;}
+    .approval-actions, .user-actions, .auth-actions, .form-actions{min-width:0;}
+    .approval-actions button, .user-actions button, .auth-actions button, .form-actions button{white-space:normal;}
+
+    .drive-evidence-grid, .drive-status{min-width:0;}
+    .drive-pill{max-width:100%; overflow-wrap:anywhere;}
+    input[type="file"]{line-height:1.2;}
+
+    .report-actions{align-items:stretch;}
+    .report-actions button{width:100%; overflow-wrap:anywhere;}
+
+    @media (prefers-reduced-motion: reduce){
+      *, *::before, *::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important;}
+    }
+
+    @media (max-width: 760px){
+      body{background:var(--bg) !important;}
+      .app{padding:max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;}
+      .hero{border-radius:22px !important; padding:14px !important; gap:12px !important;}
+      .hero-brand{display:grid !important; grid-template-columns:1fr !important; gap:12px !important; width:100% !important;}
+      .logo-badge{width:100% !important; min-width:0 !important; min-height:68px !important; border-radius:18px !important; padding:10px 12px !important;}
+      .logo-badge img{max-width:190px !important; width:min(75%, 190px) !important; height:auto !important;}
+      .hero h1{font-size:clamp(1.55rem, 7vw, 2.15rem) !important; line-height:1.08 !important; letter-spacing:-.02em !important; max-width:100% !important;}
+      .hero p{font-size:.93rem !important; line-height:1.32 !important;}
+      .hero-chips{display:grid !important; grid-template-columns:1fr !important; gap:7px !important; width:100%;}
+      .hero-chip{justify-content:center !important; width:100% !important; padding:8px 10px !important;}
+      .hero-actions{display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; width:100% !important;}
+      .hero-actions button{width:100% !important; min-width:0 !important;}
+
+      .toolbar{position:sticky !important; top:0 !important; z-index:100 !important; margin:10px 0 !important; padding:8px !important; border:1px solid rgba(203,213,225,.7); border-radius:16px; background:rgba(244,247,251,.94) !important; backdrop-filter:blur(12px);}
+      .toolbar-group{display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; width:100% !important;}
+      .toolbar-group .view-label{grid-column:1 / -1;}
+      .toolbar-group button{width:100% !important; min-width:0 !important; min-height:42px !important;}
+      .app-menu{display:grid !important; grid-template-columns:1fr !important; gap:8px !important;}
+      .app-menu button{min-height:46px !important;}
+
+      .card{border-radius:18px !important; margin-bottom:12px !important;}
+      .card-header{padding:14px !important; gap:8px !important;}
+      .card-header h2, .card-header h3{font-size:1rem !important; line-height:1.2 !important;}
+      .card-body{padding:12px !important;}
+      fieldset{border-radius:16px !important; padding:12px !important; margin-bottom:12px !important;}
+      legend{white-space:normal !important; max-width:100%; line-height:1.2;}
+
+      .cloud-grid, .auth-row, .form-grid, .analytics-filter-grid{display:grid !important; grid-template-columns:1fr !important; gap:10px !important;}
+      .auth-row .field, .form-grid .field, .analytics-filter-grid .field, .analytics-filter-grid .actions{grid-column:1 / -1 !important;}
+      .col-2,.col-3,.col-4,.col-5,.col-6,.col-7,.col-8,.col-12{grid-column:1 / -1 !important;}
+      input, select, textarea{font-size:16px !important; min-height:48px !important; padding:12px !important; border-radius:14px !important;}
+      textarea{min-height:150px !important; max-height:none !important;}
+      label{font-size:.72rem !important; line-height:1.2 !important;}
+
+      .auth-actions, .form-actions, .approval-actions, .user-actions, .inline-tools, .time-actions{display:grid !important; grid-template-columns:1fr !important; gap:8px !important; width:100% !important;}
+      .auth-actions button, .form-actions button, .approval-actions button, .user-actions button, .inline-tools button, .time-actions button{width:100% !important; min-height:48px !important;}
+      .user-chip, .connection-pill, .version-pill{white-space:normal !important; line-height:1.2 !important; justify-content:center; width:100%;}
+
+      .segmented-control, .checks, .exports, .exports-minimal, .report-actions, .drive-evidence-grid, .drive-status{display:grid !important; grid-template-columns:1fr !important; gap:8px !important;}
+      .seg-option, .check-card, .exports button, .report-actions button{min-height:50px !important; width:100% !important;}
+      .seg-option .seg-title, .seg-option .seg-sub{white-space:normal !important;}
+
+      .calc-summary{display:grid !important; grid-template-columns:1fr !important; gap:9px !important; padding:12px !important;}
+      .calc-formula{font-size:1rem !important; line-height:1.25 !important;}
+      .calc-rule{font-size:.86rem !important; line-height:1.4 !important;}
+      .approval-gate.show{grid-template-columns:38px 1fr !important; gap:10px !important;}
+
+      .timer-card{display:grid !important; grid-template-columns:1fr !important; text-align:center !important; gap:8px !important; padding:12px !important;}
+      .timer-display{font-size:clamp(2rem, 13vw, 3.05rem) !important; width:100% !important;}
+      .timer-copy{text-align:center !important; font-size:.9rem !important;}
+
+      .dashboard-grid, .analytics-kpis{display:grid !important; grid-template-columns:1fr !important; gap:9px !important;}
+      .kpi, .analytics-kpi{padding:12px !important; border-radius:16px !important; min-height:auto !important;}
+      .kpi .value, .analytics-kpi .num{font-size:1.5rem !important; line-height:1.08 !important;}
+      .kpi .label, .analytics-kpi .txt, .analytics-kpi .lbl{font-size:.75rem !important; line-height:1.25 !important;}
+      .chart-card, .analytics-chart{padding:12px !important; border-radius:16px !important;}
+      .donut-wrap{display:grid !important; grid-template-columns:1fr !important; justify-items:center !important;}
+      .bar-row{display:grid !important; grid-template-columns:1fr !important; gap:6px !important; padding:8px 0 !important;}
+      .bar-track{height:12px !important; width:100% !important;}
+      .bar-value{text-align:left !important;}
+
+      .table-tools{display:grid !important; grid-template-columns:1fr !important; gap:8px !important;}
+      .search{width:100% !important; max-width:none !important;}
+      .table-tools .toolbar-group{grid-template-columns:1fr !important;}
+      .table-scroll{border-radius:14px !important; max-height:68vh !important;}
+      table{min-width:880px !important;}
+      .mini-table{min-width:720px !important;}
+      th, td{font-size:.76rem !important; padding:8px !important;}
+      .pill{white-space:normal !important; border-radius:10px !important;}
+      .row-actions{display:grid !important; grid-template-columns:1fr !important;}
+
+      .toast{left:8px !important; right:8px !important; bottom:calc(10px + env(safe-area-inset-bottom)) !important; transform:translateY(120%) !important; width:auto !important; max-width:none !important;}
+      .toast.show{transform:translateY(0) !important;}
+    }
+
+    @media (max-width:390px){
+      .app{padding-left:6px !important; padding-right:6px !important;}
+      .card-body{padding:10px !important;}
+      fieldset{padding:10px !important;}
+      .hero h1{font-size:1.48rem !important;}
+      .timer-display{font-size:2rem !important;}
+      table{min-width:820px !important;}
+    }
+
+  </style></head><body><main class="page"><section class="hero"><div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></div><div class="stamp">Periodo: ${escapeHtml(reportDateRangeLabel())}<br>Generado: ${escapeHtml(todayHuman())}</div></section><section class="kpis"><div class="kpi"><b>${m.total}</b><span>Registros</span></div><div class="kpi"><b>${m.completed}</b><span>Cortes finalizados</span></div><div class="kpi"><b>${fmtHours(m.totalMin)}</b><span>Horas hombre</span></div><div class="kpi"><b>${m.avgMin||0} min</b><span>Promedio corte</span></div><div class="kpi"><b>${m.cortesHora?m.cortesHora.toFixed(2):'0'}</b><span>Cortes/hora</span></div><div class="kpi"><b>${m.metrosHora?m.metrosHora.toFixed(1):'0'}</b><span>Metros/hora</span></div></section><section class="grid">${reportBar('Cortes por tipo de pedido',m.byPedido,accent)}${reportBar('Estados del proceso',m.counts,'#0b2a5b')}${reportBar('Cortes por día',m.byDia,'#2563eb')}${reportBar('Productividad por responsable',m.byResp,'#059669')}</section><section class="r-card comment" style="margin-top:14px"><h3>${isAudit?'Lectura de auditoría':'Resumen gerencial'}</h3><ul>${comments}</ul></section><section class="table"><table><thead><tr><th>Fecha</th><th>Código</th><th>Tipo</th><th>Pedido</th><th>Cable</th><th>Carrete</th><th>Metros</th><th>Sobrante</th><th>Estado</th><th>Responsable</th><th>Min</th></tr></thead><tbody>${rows||'<tr><td colspan="11">Sin registros para el periodo seleccionado.</td></tr>'}</tbody></table></section><div class="footer">Electroingeniería · Control de Corte de Cable · Documento generado automáticamente desde la herramienta operativa</div></main></body></html>`;
+    }
+    function openReportWindow(html, filename){
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      downloadBlob(blob, filename, 'text/html;charset=utf-8');
+      const url=URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    }
+    function reportEmailSummary(type, filename){
+      const list=reportRecords(); const m=reportMetrics(list);
+      const kind=type==='auditoria'?'informe ejecutivo de auditoría':'informe gerencial';
+      return `Buen día.\n\nComparto ${kind} del proceso de corte de cable.\n\nPeriodo: ${reportDateRangeLabel()}\nRegistros: ${m.total}\nCortes finalizados: ${m.completed}\nHoras hombre: ${fmtHours(m.totalMin)} h\nPromedio por corte: ${m.avgMin||0} min\nCortes/hora: ${m.cortesHora?m.cortesHora.toFixed(2):'0'}\nMetros/hora: ${m.metrosHora?m.metrosHora.toFixed(1):'0'}\nPendientes: ${m.pendientes}\nNo conformes / por revisar: ${m.noConformes}\n\nArchivo sugerido para adjuntar: ${filename}\n\nQuedo atento(a) a las observaciones.`;
+    }
+    function openReportMail(type, filename){
+      const to = type==='auditoria' ? 'l.grisales@ei.com.co,y.castro@ei.com.co' : 'diego.velez@ei.com.co';
+      const subject = type==='auditoria' ? `Informe auditoría corte de cable - ${todayHuman()}` : `Informe gerencial corte de cable - ${todayHuman()}`;
+      const body = reportEmailSummary(type, filename);
+      copySummaryToClipboard(body);
+      window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+    function generateDocumentReport(type){
+      if(!isRole('LIDER_LOGISTICO')){toast('Solo Líder Logístico puede generar y enviar informes.', 'error'); return;}
+      if(!records.length){toast('No hay registros para generar informe.', 'error'); return;}
+      const stamp=nowParts().stamp;
+      const filename = type==='auditoria' ? `informe_auditoria_corte_cable_${stamp}.html` : `informe_gerencial_corte_cable_${stamp}.html`;
+      const html=buildReportHtml(type);
+      openReportWindow(html, filename);
+      openReportMail(type, filename);
+      const panel=$('reportSharePanel');
+      if(panel){panel.classList.add('show'); panel.innerHTML=`<strong>Informe generado:</strong> ${escapeHtml(filename)}<br>Se abrió el correo con destinatario y resumen listos. Adjunte el documento descargado antes de enviar.`; panel.style.borderColor='#bbf7d0'; panel.style.background='#f0fdf4'; panel.style.color='#14532d';}
+      toast('Informe generado. Adjunte el documento al correo.', 'export');
+    }
+
     function showSharePanel(message, type='ok'){
       const panel=$('sharePanel');
       if(!panel) return;
@@ -3068,6 +3583,7 @@ Quedo atento(a) a la validación correspondiente.`;
       if($('usersPanel')) $('usersPanel').hidden = !showUsers;
       if($('btnDeleteAll')) $('btnDeleteAll').hidden = !canDeleteRecords();
       if($('exportPanel')) $('exportPanel').hidden = !isRole('LIDER_LOGISTICO');
+      if($('reportPanel')) $('reportPanel').hidden = !isRole('LIDER_LOGISTICO');
       if(document.body.dataset.page === 'analytics' && !isRole('LIDER_LOGISTICO','GERENCIA')) setPage('operation');
       if($('cutForm')) $('cutForm').querySelectorAll('input,select,textarea,button').forEach(el=>{ if(el.id !== 'btnSound') el.disabled = !canCreateRecords(); });
       syncOperatorFields();
@@ -3400,6 +3916,8 @@ Quedo atento(a) a la validación correspondiente.`;
     document.addEventListener('click', (e)=>{ if(e.target.matches('button')) beep('click'); });
     document.querySelectorAll('[data-view-btn]').forEach(btn=>btn.addEventListener('click', ()=>setView(btn.dataset.viewBtn)));
     document.querySelectorAll('[data-export]').forEach(btn=>btn.addEventListener('click', ()=>exportRecords(btn.dataset.export)));
+    $('btnReportGerencial')?.addEventListener('click', ()=>generateDocumentReport('gerencial'));
+    $('btnReportAuditoria')?.addEventListener('click', ()=>generateDocumentReport('auditoria'));
     document.querySelectorAll('[data-page-btn]').forEach(btn=>btn.addEventListener('click', ()=>setPage(btn.dataset.pageBtn)));
     ['graphDateFrom','graphDateTo','graphSearch'].forEach(id=>{ if($(id)) $(id).addEventListener('input', renderAnalytics); });
     if($('btnApplyGraphs')) $('btnApplyGraphs').addEventListener('click', renderAnalytics);
