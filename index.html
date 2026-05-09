@@ -1377,7 +1377,7 @@
 
 
 
-    /* v4.7 - iOS final QA */
+    /* v4.7.1 - Excel export fix */
     @supports (-webkit-touch-callout:none){input,select,textarea,button{font-size:16px !important;} body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}}
     @media(max-width:480px){
       body{background:#f6f8fb !important;}
@@ -1793,7 +1793,7 @@
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    const VERSION = '4.7.0-EXCEL-IOS';
+    const VERSION = '4.7.1-EXCEL-IOS-FIX';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -3142,17 +3142,6 @@
       u32(ev,0,0x06054b50); u16(ev,4,0); u16(ev,6,0); u16(ev,8,files.length); u16(ev,10,files.length); u32(ev,12,centralSize); u32(ev,16,offset); u16(ev,20,0);
       return new Blob([...localParts, ...centralParts, end], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     }
-    function makeXlsxBlob(){
-      const files = [
-        {path:'[Content_Types].xml', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'},
-        {path:'_rels/.rels', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
-        {path:'xl/workbook.xml', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="CONTROL_CORTE" sheetId="1" r:id="rId1"/></sheets></workbook>'},
-        {path:'xl/_rels/workbook.xml.rels', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'},
-        {path:'xl/worksheets/sheet1.xml', data:makeSheetXml()}
-      ];
-      return makeZip(files);
-    }
-
     function makeExcelHtml(){
       const rows = rowsForExport();
       const th = columns.map(([key])=>`<th>${escapeHtml(key)}</th>`).join('');
