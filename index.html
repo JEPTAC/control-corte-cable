@@ -1793,7 +1793,7 @@
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    const VERSION = '4.7.1-EXCEL-IOS-FIX';
+    const VERSION = '4.7.2-EXCEL-EXPORT-FIX';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -3007,7 +3007,7 @@
       const byResp = groupSum(completedListForExcel(list),r=>r.RESPONSABLE_CORTE||'Sin responsable');
       const rows = [];
       rows.push([{v:'CONTROL DE CORTE DE CABLE · DASHBOARD EJECUTIVO',s:1},{},{},{},{},{},{},{}]);
-      rows.push([{v:'Generado',s:4},{v:todayHuman(),s:9,t:'s'},{v:'Periodo',s:4},{v:reportDateRangeLabel ? reportDateRangeLabel() : 'Todos los registros',s:9,t:'s'},{v:'Responsable',s:4},{v:operatorName ? operatorName() : '',s:9,t:'s'},{v:'Rol',s:4},{v:currentUserProfile?.rol||'',s:9,t:'s'}]);
+      rows.push([{v:'Generado',s:4},{v:todayHuman(),s:9,t:'s'},{v:'Periodo',s:4},{v:reportDateRangeLabel ? reportDateRangeLabel() : 'Todos los registros',s:9,t:'s'},{v:'Responsable',s:4},{v:operatorName ? operatorName() : '',s:9,t:'s'},{v:'Rol',s:4},{v:currentProfile?.rol||'',s:9,t:'s'}]);
       rows.push([]);
       rows.push([{v:'REGISTROS',s:4},{v:m.total,s:5},{v:'FINALIZADOS',s:4},{v:m.completed,s:5},{v:'HORAS HOMBRE',s:4},{v:Number((m.hours||0).toFixed(2)),s:5},{v:'PROMEDIO MIN/CORTE',s:4},{v:m.avgMin||0,s:5}]);
       rows.push([{v:'CORTES/HORA',s:4},{v:Number((m.cortesHora||0).toFixed(2)),s:5},{v:'METROS/HORA',s:4},{v:Number((m.metrosHora||0).toFixed(1)),s:5},{v:'PENDIENTES',s:4},{v:m.pendientes||0,s:8},{v:'NO CONFORMES / REVISAR',s:4},{v:m.noConformes||0,s:7}]);
@@ -3151,7 +3151,15 @@
 
     function downloadBlob(content, filename, mime){
       const blob = content instanceof Blob ? content : new Blob([content], {type:mime});
-      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(url); a.remove();}, 600);
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=filename;
+      a.target='_blank';
+      a.rel='noopener';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{try{URL.revokeObjectURL(url);}catch(_e){}; try{a.remove();}catch(_e){};}, 1600);
       lastExportFile = {blob, filename, mime};
       return filename;
     }
@@ -3162,10 +3170,22 @@
       if(!records.length){toast('No hay registros para exportar.', 'error'); return;}
       const stamp=nowParts().stamp;
       let filename='', content='', mime='';
-      if(format === 'xls') { filename = `control_corte_cable_${stamp}.xlsx`; content = makeXlsxBlob(); mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; }
+      if(format === 'xls') {
+        filename = `control_corte_cable_${stamp}.xlsx`;
+        try{
+          content = makeXlsxBlob();
+          mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        }catch(excelError){
+          console.error('Error generando XLSX, se usará respaldo XLS HTML:', excelError);
+          filename = `control_corte_cable_${stamp}.xls`;
+          content = makeExcelHtml();
+          mime = 'application/vnd.ms-excel;charset=utf-8';
+        }
+      }
       if(format === 'csv') { filename = `control_corte_cable_${stamp}.csv`; content = makeDelimited(';'); mime = 'text/csv;charset=utf-8'; }
       if(format === 'txt') { filename = `control_corte_cable_${stamp}.txt`; content = makeDelimited('|'); mime = 'text/plain;charset=utf-8'; }
       if(format === 'json') { filename = `respaldo_control_corte_cable_${stamp}.json`; content = JSON.stringify(records, null, 2); mime = 'application/json;charset=utf-8'; }
+      if(!content){toast('No fue posible preparar el archivo.', 'error'); return;}
       const downloadedName = downloadBlob(content, filename, mime);
       const summary = buildShareSummary(downloadedName);
       await copySummaryToClipboard(summary);
