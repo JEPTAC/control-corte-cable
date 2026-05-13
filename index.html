@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Control de Corte de Cable | Electroingeniería</title>
-  <!-- versión 4.6: QA visual, popups y celdas optimizadas -->
+  <!-- versión 4.8: lector PDF de pedido, requerimientos a ventas e interfaz iOS -->
   <style>
     :root{
       --navy:#0b2a5b;
@@ -1532,6 +1532,25 @@
       }
     }
 
+
+    .pedido-pdf-panel{border-color:rgba(0,138,138,.28); background:linear-gradient(180deg,#ffffff,#f6fbfb)}
+    .pdf-status{min-height:52px; display:flex; align-items:center; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:#fff; color:var(--muted); font-weight:800; line-height:1.35}
+    .pedido-resumen{margin-top:12px; border:1px solid rgba(0,138,138,.2); background:#eefafa; color:var(--navy); border-radius:16px; padding:12px 14px; font-weight:800; line-height:1.45}
+    .pedido-items{margin-top:12px; display:grid; gap:10px}
+    .pedido-item{border:1px solid var(--line); background:#fff; border-radius:16px; padding:12px; display:grid; gap:8px; box-shadow:var(--shadow-soft)}
+    .pedido-item-main{display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap}
+    .pedido-item strong{color:var(--navy)}
+    .pedido-item .meta{font-size:.82rem; color:var(--muted); line-height:1.35}
+    .pedido-badge{display:inline-flex; align-items:center; justify-content:center; padding:5px 8px; border-radius:999px; background:#eef4ff; color:#1d4ed8; font-weight:900; font-size:.72rem; letter-spacing:.02em}
+    .sales-request-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 0 0}
+    .sales-request-actions span{font-size:.85rem; color:var(--muted); font-weight:700; line-height:1.35}
+    @media(max-width:760px){
+      .pedido-item-main{display:block}
+      .pedido-item .btn-small{width:100%; margin-top:10px}
+      .sales-request-actions button{width:100%}
+      .pdf-status{min-height:auto}
+    }
+
   </style>
 </head>
 <body data-view="auto" data-page="operation" data-session="out" data-app-role="SIN_SESION">
@@ -1611,7 +1630,7 @@
           <div class="icon">🔐</div>
           <div>
             <strong>Ingrese con su usuario para registrar cortes.</strong><br>
-            La trazabilidad del corte se toma automáticamente del usuario que inicia sesión. El operario solo completa cable, metros, carrete, sobrante y auxiliar de chequeo.
+            La trazabilidad del corte se toma automáticamente del usuario que inicia sesión. El operario carga el pedido, verifica la línea de corte y completa solo los datos necesarios para calcular el sobrante.
           </div>
         </div>
       </div>
@@ -1648,10 +1667,27 @@
         <div class="card-body operator-simple">
           <form id="cutForm" autocomplete="off">
             <div class="quick-steps" aria-label="Pasos de registro">
-              <div class="quick-step"><span>1</span><div>Identifique cable y metros a cortar.</div></div>
-              <div class="quick-step"><span>2</span><div>Registre carrete y metraje disponible.</div></div>
-              <div class="quick-step"><span>3</span><div>Si requiere aprobación, envíela y espere autorización.</div></div>
+              <div class="quick-step"><span>1</span><div>Cargue el PDF del pedido o digite la línea de corte.</div></div>
+              <div class="quick-step"><span>2</span><div>Verifique referencia, metros solicitados y disponibilidad.</div></div>
+              <div class="quick-step"><span>3</span><div>Si hay novedad, genere requerimiento a Ventas o solicite aprobación.</div></div>
             </div>
+
+            <fieldset class="pedido-pdf-panel">
+              <legend>Pedido de venta en PDF</legend>
+              <div class="form-grid">
+                <div class="field col-6 primary-input">
+                  <label for="pedidoPdfInput">Cargar pedido PDF</label>
+                  <input type="file" id="pedidoPdfInput" accept="application/pdf" />
+                  <div class="adaptive-hint">La app leerá el pedido y listará las referencias para verificar. No toma valores unitarios ni parciales.</div>
+                </div>
+                <div class="field col-6 session-filled">
+                  <label>Estado de lectura</label>
+                  <div class="pdf-status" id="pedidoPdfStatus">Sin pedido cargado.</div>
+                </div>
+              </div>
+              <div id="pedidoPdfResumen" class="pedido-resumen" hidden></div>
+              <div id="pedidoPdfItems" class="pedido-items" hidden></div>
+            </fieldset>
 
             <fieldset>
               <legend>Datos del corte</legend>
@@ -1664,12 +1700,11 @@
             </fieldset>
 
             <fieldset>
-              <legend>Carrete y sobrante</legend>
+              <legend>Disponibilidad y sobrante</legend>
               <div class="form-grid">
-                <div class="field col-4 primary-input"><label for="carreteLote">Carrete / lote *</label><input id="carreteLote" required placeholder="ID del carrete o lote" /></div>
-                <div class="field col-4 primary-input"><label for="disponibleAntes">Metros disponibles en carrete *</label><input type="text" inputmode="decimal" id="disponibleAntes" required placeholder="Ej. 550 o 499,99" /></div>
-                <div class="field col-2 readonly-result"><label for="remanenteProyectado">Sobrante</label><input id="remanenteProyectado" class="readonly" readonly /></div>
-                <div class="field col-2 readonly-result"><label for="restriccionRemanente">Condición</label><input id="restriccionRemanente" class="readonly" readonly /></div>
+                <div class="field col-6 primary-input"><label for="disponibleAntes">Metros disponibles para el corte *</label><input type="text" inputmode="decimal" id="disponibleAntes" required placeholder="Ej. 550 o 499,99" /></div>
+                <div class="field col-3 readonly-result"><label for="remanenteProyectado">Sobrante automático</label><input id="remanenteProyectado" class="readonly" readonly /></div>
+                <div class="field col-3 readonly-result"><label for="restriccionRemanente">Condición</label><input id="restriccionRemanente" class="readonly" readonly /></div>
               </div>
               <div class="calc-summary" id="calcSummary">
                 <div class="calc-formula">Disponible − a cortar = <span>Sobrante</span></div>
@@ -1682,11 +1717,12 @@
             </fieldset>
 
             <fieldset>
-              <legend>Chequeo y aprobación</legend>
+              <legend>Verificación y requerimiento</legend>
               <div class="form-grid">
-                <div class="field col-6 primary-input"><label for="responsableChequeo">Auxiliar de chequeo / recolección</label><input id="responsableChequeo" placeholder="Nombre del auxiliar que chequeó" /></div>
                 <div class="field col-6 session-filled"><label for="responsableCorte">Responsable del corte</label><input id="responsableCorte" readonly placeholder="Se toma del usuario activo" /><div class="adaptive-hint" id="responsableCorteInfo">Se completa automáticamente con el usuario activo.</div></div>
-                <div class="field col-12 primary-input"><label for="motivoAutorizacion">Razón / observación de aprobación</label><textarea id="motivoAutorizacion" placeholder="Solo cuando el sobrante requiera aprobación, indique la razón"></textarea></div>
+                <div class="field col-6 primary-input"><label for="ventasMotivo">Requerimiento a Ventas</label><select id="ventasMotivo"><option value="">Sin requerimiento</option><option value="PEDIDO_MAL_ELABORADO">Pedido mal elaborado</option><option value="CANTIDAD_NO_COINCIDE">Cantidad solicitada no coincide</option><option value="OFRECER_CARRETE_COMPLETO">Sugerir venta de todo el carrete por remanente mínimo</option><option value="REFERENCIA_INCORRECTA">Referencia incorrecta</option><option value="FALTA_INFORMACION">Falta información del pedido</option><option value="OTRA_NOVEDAD">Otra novedad</option></select></div>
+                <div class="field col-12 primary-input"><label for="motivoAutorizacion">Observación / razón</label><textarea id="motivoAutorizacion" placeholder="Describa aprobación requerida o requerimiento a Ventas. Ej: el pedido solicita 500 m, pero conviene ofrecer 502 m para cerrar el carrete."></textarea></div>
+                <div class="col-12 sales-request-actions"><button type="button" id="btnSalesRequirement" class="btn-orange">Abrir requerimiento a Ventas</button><span>Se abre una ventana con el requerimiento listo para revisar, copiar o imprimir.</span></div>
                 <div class="col-12 status-panel" id="statusPanel">
                   <div class="status-label">Estado calculado</div>
                   <div class="status-value" id="estadoCalculado">Pendiente</div>
@@ -1751,6 +1787,11 @@
               <input id="tipoCable" />
               <input id="colorCable" />
               <input id="ubicacionProducto" />
+              <input id="carreteLote" value="NO APLICA" />
+              <input id="responsableChequeo" value="NO APLICA" />
+              <input type="hidden" id="pedidoPdfRaw" />
+              <input type="hidden" id="pedidoPdfLineIndex" />
+              <input type="hidden" id="pedidoPdfLineData" />
               <input id="autorizadoMenor50" value="NO" />
               <input id="autorizadoPor" />
               <input id="evidenciaTexto" value="Registro digital" />
@@ -1868,7 +1909,7 @@
         <div class="analytics-filter-grid">
           <div class="field"><label for="graphDateFrom">Desde</label><input type="date" id="graphDateFrom" /></div>
           <div class="field"><label for="graphDateTo">Hasta</label><input type="date" id="graphDateTo" /></div>
-          <div class="field search-wide"><label for="graphSearch">Buscar corte específico</label><input id="graphSearch" placeholder="Pedido, carrete, referencia o responsable" /></div>
+          <div class="field search-wide"><label for="graphSearch">Buscar corte específico</label><input id="graphSearch" placeholder="Pedido, referencia o responsable" /></div>
           <div class="actions"><button type="button" class="btn-primary" id="btnApplyGraphs">Filtrar</button><button type="button" id="btnClearGraphs">Limpiar</button></div>
         </div>
         <div class="analytics-kpis" id="analyticsKpis"></div>
@@ -1905,9 +1946,10 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    const VERSION = '4.7.3-CHECKS-IOS-FIX';
+    const VERSION = '4.8.0-PEDIDO-PDF-VENTAS';
     const STORAGE_KEY = 'control_corte_cable_v2';
     const DEFAULT_EMAIL_TO = 'j.perez@ei.com.co';
     const EMAIL_TO_KEY = 'control_corte_email_to';
@@ -2091,6 +2133,123 @@
       const t=$('toast'); t.textContent=message; t.classList.add('show'); beep(type); clearTimeout(toast._timer); toast._timer=setTimeout(()=>t.classList.remove('show'), 2600);
     }
 
+
+    let pedidoPdfData = null;
+
+    function isMeterUnit(unit){
+      return ['M','MT','MTS','ML','METRO','METROS'].includes(String(unit||'').toUpperCase());
+    }
+
+    async function handlePedidoPdfUpload(event){
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+      if(!window.pdfjsLib){ toast('No se pudo cargar el lector PDF. Revise conexión a internet.', 'error'); return; }
+      try{
+        $('pedidoPdfStatus').textContent = 'Leyendo pedido...';
+        if(window.pdfjsLib.GlobalWorkerOptions){
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        const buffer = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({data: buffer}).promise;
+        let text = '';
+        for(let p=1; p<=pdf.numPages; p++){
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          text += content.items.map(i=>i.str).join('\n') + '\n';
+        }
+        $('pedidoPdfRaw').value = text;
+        pedidoPdfData = parsePedidoText(text);
+        renderPedidoPdf(pedidoPdfData);
+      }catch(err){
+        console.error(err);
+        $('pedidoPdfStatus').textContent = 'No fue posible leer el PDF. Puede diligenciar los datos manualmente.';
+        toast('Error leyendo el PDF del pedido.', 'error');
+      }
+    }
+
+    function parsePedidoText(text){
+      const raw = String(text||'').replace(/\r/g,'\n');
+      const lines = raw.split(/\n+/).map(cleanText).filter(Boolean);
+      const pedidoMatch = raw.match(/No\.\s*([A-Z0-9\-]+)/i) || raw.match(/(?:PEDIDO|PVN)[^\n]*?([0-9]{3,}[-A-Z0-9]*)/i);
+      const fechaMatch = raw.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
+      let cliente = '';
+      const telIdx = lines.findIndex(l=>/^Tel[eé]fono:?$/i.test(l));
+      if(telIdx >= 0 && lines[telIdx+1]) cliente = lines[telIdx+1];
+      if(!cliente){
+        const cIdx = lines.findIndex(l=>/^Cliente$/i.test(l));
+        if(cIdx >= 0 && lines[cIdx+1]) cliente = lines[cIdx+1];
+      }
+      const items=[];
+      const itemRegex=/^(\d{5,})\s+(.+?)\s+(\d+(?:[\.,]\d+)?)\s+(M|MT|MTS|ML|METRO|METROS|UND|UN|KG|ROLLO)\b/i;
+      for(let i=0;i<lines.length;i++){
+        let line = lines[i].replace(/\$\s?[\d\.,]+/g,' ').replace(/\s+/g,' ').trim();
+        let m=line.match(itemRegex);
+        if(!m && /^\d{5,}\s+/.test(line) && lines[i+1]){
+          const merged=(line+' '+lines[i+1]).replace(/\$\s?[\d\.,]+/g,' ').replace(/\s+/g,' ').trim();
+          m=merged.match(itemRegex);
+          if(m) i++;
+        }
+        if(m){
+          const ref=m[1];
+          const desc=cleanText(m[2]);
+          const qty=normalizeDecimal(m[3]);
+          const um=String(m[4]||'').toUpperCase();
+          if(desc && !items.some(x=>x.referencia===ref && x.cantidad===qty)) items.push({referencia:ref, descripcion:desc, cantidad:qty, unidad:um, estado:'EN_ESPERA'});
+        }
+      }
+      return {pedido: pedidoMatch ? pedidoMatch[1] : '', fecha: fechaMatch ? fechaMatch[1] : '', cliente, items, raw};
+    }
+
+    function renderPedidoPdf(data){
+      if(!data){ return; }
+      const resumen=$('pedidoPdfResumen');
+      const items=$('pedidoPdfItems');
+      $('pedidoPdfStatus').textContent = data.items.length ? `Pedido leído: ${data.items.length} línea(s) detectada(s).` : 'Pedido leído, pero no se detectaron líneas con cantidad y unidad.';
+      resumen.hidden=false;
+      resumen.innerHTML = `<strong>Pedido:</strong> ${escapeHtml(data.pedido || 'No detectado')} · <strong>Fecha:</strong> ${escapeHtml(data.fecha || 'No detectada')}<br><strong>Cliente:</strong> ${escapeHtml(data.cliente || 'No detectado')}`;
+      if(data.pedido && !$('pedido').value) $('pedido').value=data.pedido;
+      if(data.cliente && $('clienteProceso')) $('clienteProceso').value=data.cliente;
+      if(data.fecha && $('fechaSolicitud')){
+        const m=data.fecha.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if(m) $('fechaSolicitud').value=`${m[3]}-${m[2]}-${m[1]}`;
+      }
+      if(!data.items.length){ items.hidden=true; return; }
+      items.hidden=false;
+      items.innerHTML=data.items.map((it,idx)=>{
+        const meter=isMeterUnit(it.unidad);
+        return `<div class="pedido-item"><div class="pedido-item-main"><div><span class="pedido-badge">${escapeHtml(it.estado)}</span> <strong>${escapeHtml(it.referencia)}</strong><div>${escapeHtml(it.descripcion)}</div><div class="meta">Cantidad: ${escapeHtml(it.cantidad)} ${escapeHtml(it.unidad)}${meter?' · se puede tomar como metros a cortar':' · unidad no métrica, verificar antes de cortar'}</div></div><button type="button" class="btn-primary btn-small" onclick="applyPedidoLine(${idx})">Cargar línea</button></div></div>`;
+      }).join('');
+      if(data.items.length === 1) applyPedidoLine(0, true);
+    }
+
+    function applyPedidoLine(index, silent=false){
+      if(!pedidoPdfData || !pedidoPdfData.items || !pedidoPdfData.items[index]) return;
+      const it=pedidoPdfData.items[index];
+      pedidoPdfData.items.forEach((x,i)=>x.estado = i===index ? 'SELECCIONADA' : 'EN_ESPERA');
+      if($('tipoPedido')) $('tipoPedido').value='VENTAS';
+      if($('pedido') && pedidoPdfData.pedido) $('pedido').value=pedidoPdfData.pedido;
+      if($('referencia')) $('referencia').value = `${it.referencia} - ${it.descripcion}`;
+      if($('metrosSolicitados') && isMeterUnit(it.unidad)) $('metrosSolicitados').value = it.cantidad;
+      if($('pedidoPdfLineIndex')) $('pedidoPdfLineIndex').value = String(index);
+      if($('pedidoPdfLineData')) $('pedidoPdfLineData').value = JSON.stringify(it);
+      renderPedidoPdf(pedidoPdfData);
+      calcRemanent();
+      if(!silent) toast(isMeterUnit(it.unidad) ? 'Línea cargada al formulario.' : 'Línea cargada. Verifique metros manualmente.', 'ok');
+    }
+
+    function salesReasonLabel(v){
+      return ({PEDIDO_MAL_ELABORADO:'Pedido mal elaborado', CANTIDAD_NO_COINCIDE:'Cantidad solicitada no coincide', OFRECER_CARRETE_COMPLETO:'Sugerir venta de todo el carrete por remanente mínimo', REFERENCIA_INCORRECTA:'Referencia incorrecta', FALTA_INFORMACION:'Falta información del pedido', OTRA_NOVEDAD:'Otra novedad'})[v] || 'Requerimiento operativo';
+    }
+
+    function openSalesRequirement(){
+      const reason=val('ventasMotivo') || 'OTRA_NOVEDAD';
+      const body=`<h1>Requerimiento a Ventas</h1><p><strong>Fecha:</strong> ${todayHuman()}</p><table><tr><th>Motivo</th><td>${escapeHtml(salesReasonLabel(reason))}</td></tr><tr><th>Pedido</th><td>${escapeHtml(val('pedido') || 'Sin pedido')}</td></tr><tr><th>Referencia</th><td>${escapeHtml(val('referencia') || 'Sin referencia')}</td></tr><tr><th>Metros solicitados</th><td>${escapeHtml(val('metrosSolicitados') || 'Sin dato')}</td></tr><tr><th>Metros disponibles</th><td>${escapeHtml(val('disponibleAntes') || 'Sin dato')}</td></tr><tr><th>Sobrante proyectado</th><td>${escapeHtml(val('remanenteProyectado') || 'Sin cálculo')}</td></tr><tr><th>Condición</th><td>${escapeHtml(val('restriccionRemanente') || 'Sin cálculo')}</td></tr><tr><th>Solicitante</th><td>${escapeHtml(operatorName() || currentUser?.email || 'Usuario activo')}</td></tr><tr><th>Observación</th><td>${escapeHtml(val('motivoAutorizacion') || 'Sin observación')}</td></tr></table><p class="note">Este requerimiento se genera para revisión de Ventas antes de continuar o ajustar el pedido.</p>`;
+      const w=window.open('', 'requerimientoVentas', 'width=900,height=700,scrollbars=yes');
+      if(!w){ toast('Permita ventanas emergentes para abrir el requerimiento.', 'error'); return; }
+      w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Requerimiento a Ventas</title><style>body{font-family:Arial,sans-serif;margin:28px;color:#17233d}h1{color:#0b2a5b}table{border-collapse:collapse;width:100%;margin-top:16px}th,td{border:1px solid #d7e0ec;padding:10px;text-align:left;vertical-align:top}th{width:210px;background:#eef4ff;color:#0b2a5b}.note{margin-top:18px;padding:12px;border-left:4px solid #f36b13;background:#fff7ed}.actions{margin-top:18px}button{padding:10px 14px;border:0;border-radius:10px;background:#0b2a5b;color:#fff;font-weight:bold;cursor:pointer}@media print{button{display:none}}</style></head><body>${body}<div class="actions"><button onclick="window.print()">Imprimir / guardar PDF</button></div></body></html>`);
+      w.document.close();
+    }
+
     function setCurrentDateTime(){
       const n=nowParts();
       if(!$('fechaSolicitud').value) $('fechaSolicitud').value=n.date;
@@ -2157,7 +2316,7 @@
     function remanentRule(tipo, rem){
       const t = String(tipo || 'VENTAS').toUpperCase();
       if(!Number.isFinite(rem)){
-        return {requires:false, approvalType:'NO_REQUIERE', status:'PENDIENTE', condition:'', css:'warn', route:'Ingrese los metros disponibles y los metros a cortar para calcular la restricción.', approver:'', authorizedBy:'', message:'Ingrese metros y carrete para habilitar el corte.'};
+        return {requires:false, approvalType:'NO_REQUIERE', status:'PENDIENTE', condition:'', css:'warn', route:'Ingrese los metros disponibles y los metros a cortar para calcular la restricción.', approver:'', authorizedBy:'', message:'Ingrese metros disponibles y metros a cortar para habilitar el corte.'};
       }
 
       if(t === 'ALUMBRADO'){
@@ -2496,7 +2655,7 @@
       setFieldsetDisabled(measure, !unlocked);
       if(sendBtn) sendBtn.hidden = !(requires && !approved);
       if(lock){
-        if(!hasRem) lock.innerHTML = '<span class="icon">🔒</span><div>Ingrese metros y carrete para habilitar el corte.</div>';
+        if(!hasRem) lock.innerHTML = '<span class="icon">🔒</span><div>Ingrese metros disponibles y metros a cortar para habilitar el corte.</div>';
         else if(requires && !approved) lock.innerHTML = '<span class="icon">⏳</span><div><strong>Corte bloqueado.</strong><br>Envíe la aprobación y espere respuesta antes de iniciar el corte.</div>';
         else if(approved) lock.innerHTML = '<span class="icon">✅</span><div><strong>Aprobación recibida.</strong><br>Presione <strong>Iniciar corte</strong> para activar el cronómetro y <strong>Finalizar corte</strong> para cerrarlo.</div>';
         else lock.innerHTML = '<span class="icon">✅</span><div><strong>Corte habilitado.</strong><br>Presione <strong>Iniciar corte</strong> para medir el tiempo real del corte.</div>';
@@ -2623,7 +2782,7 @@
       const novedad = val('novedad');
       const franja = val('franjaAtencion');
       const cumpleTiempo = val('cumpleTiempo');
-      if(!val('tipoPedido') || !val('referencia') || !val('carreteLote') || !val('metrosSolicitados') || !val('disponibleAntes')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete tipo de pedido, cable, metros a cortar y carrete para calcular el estado.', cls:'status-warn'};
+      if(!val('tipoPedido') || !val('referencia') || !val('metrosSolicitados') || !val('disponibleAntes')) return {estado:'PENDIENTE', label:'Pendiente', detail:'Complete tipo de pedido, referencia, metros a cortar y disponibilidad para calcular el estado.', cls:'status-warn'};
       if(Number.isFinite(rem) && rule.requires && !currentFormApproved()) return {estado:rule.status, label: rule.status === 'PENDIENTE_GERENCIA' ? 'Pendiente gerencia' : 'Pendiente líder', detail: rule.message + ' No se puede iniciar el corte sin aprobación.', cls:'status-warn'};
       if(Number.isFinite(rem) && rule.requires && currentFormApproved() && (!val('horaInicio') || !val('horaFin'))) return {estado:'APROBADO_PENDIENTE_CORTE', label:'Aprobado, pendiente corte', detail:'La aprobación fue recibida. Inicie y finalice el corte con el cronómetro.', cls:'status-warn'};
       if(novedad === 'RETRABAJO_NO_CONFORME' || !qualityOk) return {estado:'NO_CONFORME', label:'No conforme', detail:'Existe retrabajo/no conformidad o falta un control de calidad.', cls:'status-stop'};
@@ -2726,6 +2885,8 @@
       if(!$('fechaSolicitud').value) $('fechaSolicitud').value = n.date;
       if(!$('horaSolicitud').value) $('horaSolicitud').value = n.time;
       if(!$('clienteProceso').value) $('clienteProceso').value = 'Logística';
+      if($('carreteLote') && !$('carreteLote').value) $('carreteLote').value = 'NO APLICA';
+      if($('responsableChequeo') && !$('responsableChequeo').value) $('responsableChequeo').value = 'NO APLICA';
       if(!$('pedido').value) $('pedido').value = 'AUTO-' + nextConsecutive();
       if(!$('evidenciaTexto').value) $('evidenciaTexto').value = 'Registro digital';
       if($('observacion')) $('observacion').value = val('motivoAutorizacion');
@@ -2756,9 +2917,9 @@
       const rem = parseDecimal($('remanenteProyectado').value);
       const approvalNeeded = approvalRequiredNow();
       const approved = currentFormApproved();
-      const required = ['tipoPedido','referencia','metrosSolicitados','carreteLote','disponibleAntes'];
+      const required = ['tipoPedido','referencia','metrosSolicitados','disponibleAntes'];
       if(submitIntent === 'approval') required.push('motivoAutorizacion');
-      if(submitIntent !== 'approval') required.push('responsableChequeo','horaInicio','horaFin','metrajeFinal','remanenteReal');
+      if(submitIntent !== 'approval') required.push('horaInicio','horaFin','metrajeFinal','remanenteReal');
       for(const id of required){
         if(!val(id)){
           const label = document.querySelector(`label[for="${id}"]`)?.textContent?.replace('*','') || id;
@@ -2785,11 +2946,18 @@
       resetLiveTimer();
       resetEvidencePhotos();
       $('cutForm').reset();
+      pedidoPdfData = null;
+      if($('pedidoPdfInput')) $('pedidoPdfInput').value='';
+      if($('pedidoPdfStatus')) $('pedidoPdfStatus').textContent='Sin pedido cargado.';
+      if($('pedidoPdfResumen')) {$('pedidoPdfResumen').hidden=true; $('pedidoPdfResumen').innerHTML='';}
+      if($('pedidoPdfItems')) {$('pedidoPdfItems').hidden=true; $('pedidoPdfItems').innerHTML='';}
       submitIntent='record';
       ['registroId','consecutivoActual','aprobacionTipoActual','aprobacionEstadoActual','aprobadoPorActual','fechaAprobacionActual','duracionCorte'].forEach(id=>{ if($(id)) $(id).value=''; });
       franjaManual=false;
       document.body.dataset.session = currentUser ? 'in' : 'out';
     setCurrentDateTime();
+      if($('carreteLote')) $('carreteLote').value='NO APLICA';
+      if($('responsableChequeo')) $('responsableChequeo').value='NO APLICA';
       $('corteUniforme').checked=true; $('tramoRotulado').checked=true; $('evidenciaRegistro').checked=true;
       setSegmentValue('franjaAtencion', 'MISMO_DIA_TARDE', false);
       syncOperatorFields();
@@ -2864,7 +3032,7 @@
           <td>${statusPill(r.ESTADO_CORTE)}<br><span style="color:#667085">Calidad: ${escapeHtml(r.CUMPLE_CALIDAD)}</span>${r.APROBACION_ESTADO==='PENDIENTE'?'<br><span class="pill pill-warn">Aprobación pendiente</span>':''}</td>
           <td class="row-actions">${rowActionsForRecord(r)}</td>
         </tr>`).join('');
-      $('tableContainer').innerHTML = `<div class="table-scroll"><table><thead><tr><th>Consecutivo</th><th>Pedido / Cliente</th><th>Cable</th><th>Carrete</th><th>Restricción</th><th>Corte</th><th>Responsable</th><th>Franja</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      $('tableContainer').innerHTML = `<div class="table-scroll"><table><thead><tr><th>Consecutivo</th><th>Pedido / Cliente</th><th>Cable</th><th>Disponibilidad</th><th>Restricción</th><th>Corte</th><th>Responsable</th><th>Franja</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
 
     function countByStatus(){
@@ -2922,7 +3090,7 @@
       const list = records.filter(r=>isRole('OPERARIO') && isOwnRecord(r) && r.APROBACION_ESTADO === 'APROBADO' && !r.HORA_FIN);
       panel.hidden = !list.length;
       if(!list.length){ listEl.innerHTML=''; return; }
-      listEl.innerHTML = list.map(r=>`<div class="operator-approved-item"><strong>${escapeHtml(r.CONSECUTIVO || '')} · ${escapeHtml(r.REFERENCIA_CABLE || '')}</strong><div class="approval-meta">Carrete ${escapeHtml(r.CARRETE_LOTE||'')} · Cortar ${escapeHtml(r.METROS_SOLICITADOS||'')} m · Sobrante ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Aprobado por: ${escapeHtml(r.APROBADO_POR || '')}</div><div class="approval-actions"><button type="button" class="btn-green" onclick="continueRecord('${r.id}')">Continuar corte</button></div></div>`).join('');
+      listEl.innerHTML = list.map(r=>`<div class="operator-approved-item"><strong>${escapeHtml(r.CONSECUTIVO || '')} · ${escapeHtml(r.REFERENCIA_CABLE || '')}</strong><div class="approval-meta">Cortar ${escapeHtml(r.METROS_SOLICITADOS||'')} m · Sobrante ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Aprobado por: ${escapeHtml(r.APROBADO_POR || '')}</div><div class="approval-actions"><button type="button" class="btn-green" onclick="continueRecord('${r.id}')">Continuar corte</button></div></div>`).join('');
     }
 
 
@@ -3010,7 +3178,7 @@
       if(!list.length) comment.splice(0, comment.length, 'No hay registros en el rango seleccionado. Ajuste el filtro de fechas o búsqueda.');
       $('analyticsComment').innerHTML = `<strong>Lectura automática del periodo:</strong><ul>${comment.map(c=>`<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
       const rows=list.slice(0,80).map(r=>`<tr><td>${escapeHtml(recordDateForAnalytics(r))}</td><td>${escapeHtml(r.CONSECUTIVO||'')}</td><td>${escapeHtml(r.REFERENCIA_CABLE||'')}</td><td>${escapeHtml(r.CARRETE_LOTE||'')}</td><td>${escapeHtml(r.REMANENTE_PROYECTADO||'')}</td><td>${escapeHtml(r.RESPONSABLE_CORTE||'')}</td><td>${escapeHtml(recordMinutes(r)||'')}</td><td>${statusPill(r.ESTADO_CORTE)}</td></tr>`).join('');
-      $('analyticsDetail').innerHTML = rows ? `<table class="mini-table"><thead><tr><th>Fecha</th><th>Código</th><th>Cable</th><th>Carrete</th><th>Sobrante</th><th>Responsable</th><th>Min</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty-soft">Sin registros para mostrar.</div>';
+      $('analyticsDetail').innerHTML = rows ? `<table class="mini-table"><thead><tr><th>Fecha</th><th>Código</th><th>Cable</th><th>Disponible</th><th>Sobrante</th><th>Responsable</th><th>Min</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty-soft">Sin registros para mostrar.</div>';
     }
     function statusPillText(status){
       const map={CONFORME:'Conforme',AUTORIZADO:'Autorizado',SUSPENDIDO:'Suspendido',NO_CONFORME:'No conforme',REVISAR:'Revisar',PENDIENTE_LIDER:'Pendiente líder',PENDIENTE_GERENCIA:'Pendiente gerencia',APROBADO_PENDIENTE_CORTE:'Aprobado pendiente corte',RECHAZADO:'Rechazado'};
@@ -3678,7 +3846,7 @@ Quedo atento(a) a la validación correspondiente.`;
       }
     }
 
-</style></head><body><main class="page"><section class="hero"><div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></div><div class="stamp">Periodo: ${escapeHtml(reportDateRangeLabel())}<br>Generado: ${escapeHtml(todayHuman())}</div></section><section class="kpis"><div class="kpi"><b>${m.total}</b><span>Registros</span></div><div class="kpi"><b>${m.completed}</b><span>Cortes finalizados</span></div><div class="kpi"><b>${fmtHours(m.totalMin)}</b><span>Horas hombre</span></div><div class="kpi"><b>${m.avgMin||0} min</b><span>Promedio corte</span></div><div class="kpi"><b>${m.cortesHora?m.cortesHora.toFixed(2):'0'}</b><span>Cortes/hora</span></div><div class="kpi"><b>${m.metrosHora?m.metrosHora.toFixed(1):'0'}</b><span>Metros/hora</span></div></section><section class="grid">${reportBar('Cortes por tipo de pedido',m.byPedido,accent)}${reportBar('Estados del proceso',m.counts,'#0b2a5b')}${reportBar('Cortes por día',m.byDia,'#2563eb')}${reportBar('Productividad por responsable',m.byResp,'#059669')}</section><section class="r-card comment" style="margin-top:14px"><h3>${isAudit?'Lectura de auditoría':'Resumen gerencial'}</h3><ul>${comments}</ul></section><section class="table"><table><thead><tr><th>Fecha</th><th>Código</th><th>Tipo</th><th>Pedido</th><th>Cable</th><th>Carrete</th><th>Metros</th><th>Sobrante</th><th>Estado</th><th>Responsable</th><th>Min</th></tr></thead><tbody>${rows||'<tr><td colspan="11">Sin registros para el periodo seleccionado.</td></tr>'}</tbody></table></section><div class="footer">Electroingeniería · Control de Corte de Cable · Documento generado automáticamente desde la herramienta operativa</div></main></body></html>`;
+</style></head><body><main class="page"><section class="hero"><div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></div><div class="stamp">Periodo: ${escapeHtml(reportDateRangeLabel())}<br>Generado: ${escapeHtml(todayHuman())}</div></section><section class="kpis"><div class="kpi"><b>${m.total}</b><span>Registros</span></div><div class="kpi"><b>${m.completed}</b><span>Cortes finalizados</span></div><div class="kpi"><b>${fmtHours(m.totalMin)}</b><span>Horas hombre</span></div><div class="kpi"><b>${m.avgMin||0} min</b><span>Promedio corte</span></div><div class="kpi"><b>${m.cortesHora?m.cortesHora.toFixed(2):'0'}</b><span>Cortes/hora</span></div><div class="kpi"><b>${m.metrosHora?m.metrosHora.toFixed(1):'0'}</b><span>Metros/hora</span></div></section><section class="grid">${reportBar('Cortes por tipo de pedido',m.byPedido,accent)}${reportBar('Estados del proceso',m.counts,'#0b2a5b')}${reportBar('Cortes por día',m.byDia,'#2563eb')}${reportBar('Productividad por responsable',m.byResp,'#059669')}</section><section class="r-card comment" style="margin-top:14px"><h3>${isAudit?'Lectura de auditoría':'Resumen gerencial'}</h3><ul>${comments}</ul></section><section class="table"><table><thead><tr><th>Fecha</th><th>Código</th><th>Tipo</th><th>Pedido</th><th>Cable</th><th>Disponible</th><th>Metros</th><th>Sobrante</th><th>Estado</th><th>Responsable</th><th>Min</th></tr></thead><tbody>${rows||'<tr><td colspan="11">Sin registros para el periodo seleccionado.</td></tr>'}</tbody></table></section><div class="footer">Electroingeniería · Control de Corte de Cable · Documento generado automáticamente desde la herramienta operativa</div></main></body></html>`;
     }
     function openReportWindow(html, filename){
       const blob=new Blob([html],{type:'text/html;charset=utf-8'});
@@ -4144,7 +4312,7 @@ Quedo atento(a) a la validación correspondiente.`;
         return {title:'Solicitud rechazada', body:`La solicitud ${record.CONSECUTIVO || ''} fue rechazada. Revise la novedad antes de continuar.`};
       }
       const who = record.APROBACION_TIPO === 'AUTORIZACION_GERENCIA_MENOR_50' ? 'Gerencia' : 'Logística';
-      return {title:`Nueva aprobación pendiente`, body:`${who}: ${record.CONSECUTIVO || ''} · Carrete ${record.CARRETE_LOTE || ''} · Remanente ${record.REMANENTE_PROYECTADO || ''} m`};
+      return {title:`Nueva aprobación pendiente`, body:`${who}: ${record.CONSECUTIVO || ''} · Remanente ${record.REMANENTE_PROYECTADO || ''} m`};
     }
 
     function checkApprovalNotifications(){
@@ -4207,7 +4375,7 @@ Quedo atento(a) a la validación correspondiente.`;
       $('approvalList').innerHTML = list.map(r=>{
         const allowed = canApprove(r);
         const label = r.APROBACION_TIPO === 'VALIDACION_LIDER_50' ? 'Aprobación Logística' : 'Autorización Gerencia';
-        return `<div class="approval-item"><strong>${escapeHtml(label)}</strong><div class="approval-meta">${escapeHtml(r.CONSECUTIVO||'')} · Pedido ${escapeHtml(r.PEDIDO_REQUERIMIENTO||'')} · ${escapeHtml(r.CLIENTE_PROCESO||'')}<br>Carrete ${escapeHtml(r.CARRETE_LOTE||'')} · Remanente ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Motivo: ${escapeHtml(r.MOTIVO_AUTORIZACION || r.OBSERVACION || 'Sin detalle')}</div><div class="approval-actions">${allowed?`<button type="button" class="btn-green" onclick="approveRecord('${r.id}')">Aprobar</button><button type="button" class="btn-red" onclick="rejectRecord('${r.id}')">Rechazar</button>`:'<span class="user-chip">Sin permiso para aprobar</span>'}</div></div>`;
+        return `<div class="approval-item"><strong>${escapeHtml(label)}</strong><div class="approval-meta">${escapeHtml(r.CONSECUTIVO||'')} · Pedido ${escapeHtml(r.PEDIDO_REQUERIMIENTO||'')} · ${escapeHtml(r.CLIENTE_PROCESO||'')}<br>Remanente ${escapeHtml(r.REMANENTE_PROYECTADO||'')} m<br>Motivo: ${escapeHtml(r.MOTIVO_AUTORIZACION || r.OBSERVACION || 'Sin detalle')}</div><div class="approval-actions">${allowed?`<button type="button" class="btn-green" onclick="approveRecord('${r.id}')">Aprobar</button><button type="button" class="btn-red" onclick="rejectRecord('${r.id}')">Rechazar</button>`:'<span class="user-chip">Sin permiso para aprobar</span>'}</div></div>`;
       }).join('');
     }
     window.approveRecord = async function(id){
@@ -4301,6 +4469,8 @@ Quedo atento(a) a la validación correspondiente.`;
     $('btnEndCut').addEventListener('click', endCutTime);
     ['horaInicio','horaFin'].forEach(id=>$(id).addEventListener('input', updateDuration));
     $('btnClearForm').addEventListener('click', ()=>clearForm(true));
+    if($('pedidoPdfInput')) $('pedidoPdfInput').addEventListener('change', handlePedidoPdfUpload);
+    if($('btnSalesRequirement')) $('btnSalesRequirement').addEventListener('click', openSalesRequirement);
     $('btnToday').addEventListener('click', ()=>{const n=nowParts(); $('fechaSolicitud').value=n.date; $('horaSolicitud').value=n.time; $('fechaCorte').value=n.date; franjaManual=false; autoFranja(true); updateStatusPanel(); toast('Fecha y hora actualizadas', 'ok');});
     $('btnRefresh').addEventListener('click', ()=>{renderAll(); toast('Vista actualizada', 'ok');});
     $('btnSound').addEventListener('click', ()=>{soundEnabled=!soundEnabled; $('btnSound').textContent = 'Sonido: ' + (soundEnabled?'ON':'OFF'); toast(soundEnabled?'Sonido activado':'Sonido desactivado','click')});
